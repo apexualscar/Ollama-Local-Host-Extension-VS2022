@@ -5,24 +5,99 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
              xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
-             xmlns:util="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Utilities"
-             xmlns:catalog="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.ImageCatalog"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
+             xmlns:local="clr-namespace:OllamaLocalHostIntergration"
              toolkit:Themes.UseVsTheme="True"
              mc:Ignorable="d"
-             d:DesignHeight="300"
-             d:DesignWidth="300"
+             d:DesignHeight="600"
+             d:DesignWidth="500"
              Name="MyToolWindow">
     <Grid>
-        <StackPanel Orientation="Vertical">
-            <Label x:Name="lblHeadline"
-                   Margin="10"
-                   HorizontalAlignment="Center">Title</Label>
-            <Button Content="Click me!"
-                    Click="button1_Click"
-                    Width="120"
-                    Height="80"
-                    Name="button1" />
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Server Configuration and Actions -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center">
+            <TextBlock Text="Server:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="txtServerAddress" Width="220" Margin="0,0,10,0"/>
+            <Button Content="Clear Chat" Click="ClearChat_Click" Margin="0,0,5,0"/>
+            <Button Content="Refresh Context" Click="RefreshContext_Click"/>
         </StackPanel>
+
+        <!-- Model Selection -->
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,5" VerticalAlignment="Center">
+            <TextBlock Text="Model:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <ComboBox x:Name="comboModels" Width="200" SelectionChanged="ComboModels_SelectionChanged"/>
+            <Button Content="Refresh Models" Click="RefreshModels_Click" Margin="10,0,0,0"/>
+        </StackPanel>
+
+        <!-- Code Context (Collapsible) -->
+        <Expander Grid.Row="2" Header="Current Code Context" IsExpanded="False" Margin="10,0,10,5">
+            <TextBox x:Name="txtCodeContext" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80"/>
+        </Expander>
+
+        <!-- Chat Messages -->
+        <ScrollViewer x:Name="chatMessagesScroll" Grid.Row="3" Margin="10,5" VerticalScrollBarVisibility="Auto">
+            <ItemsControl x:Name="chatMessagesPanel">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,5" 
+                                BorderThickness="1"
+                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                                Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
+                            <Grid Margin="5">
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="*"/>
+                                </Grid.RowDefinitions>
+                                <!-- Header -->
+                                <TextBlock Grid.Row="0" 
+                                         Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
+                                         FontWeight="Bold"
+                                         Margin="0,0,0,5"/>
+                                <!-- Message Content -->
+                                <TextBlock Grid.Row="1" 
+                                         Text="{Binding Content}"
+                                         TextWrapping="Wrap"/>
+                            </Grid>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Input Area -->
+        <Grid Grid.Row="4" Margin="10,5">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*"/>
+                <ColumnDefinition Width="Auto"/>
+            </Grid.ColumnDefinitions>
+            <TextBox x:Name="txtUserInput" 
+                     Grid.Column="0"
+                     Margin="0,0,5,0"
+                     AcceptsReturn="True"
+                     TextWrapping="Wrap"
+                     MinHeight="50"
+                     MaxHeight="100"
+                     VerticalScrollBarVisibility="Auto"/>
+            <Button Grid.Column="1"
+                    Content="Send"
+                    Padding="15,5"
+                    Click="SendMessage_Click"
+                    VerticalAlignment="Bottom"/>
+        </Grid>
+
+        <!-- Status Bar -->
+        <TextBlock x:Name="txtStatusBar" Grid.Row="5" Margin="10,0,10,5" Foreground="DarkRed"/>
     </Grid>
+
+    <UserControl.Resources>
+        <local:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
+    </UserControl.Resources>
 </UserControl>
