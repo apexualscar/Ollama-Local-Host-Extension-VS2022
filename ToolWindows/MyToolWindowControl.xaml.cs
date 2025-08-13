@@ -4,12 +4,10 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using OllamaLocalHostIntergration.Services;
 using OllamaLocalHostIntergration.Models;
-using System;
 using System.Threading.Tasks;
-using System.Windows.Documents;
 using EnvDTE;
-using Microsoft.VisualStudio.Shell;
 using System.Collections.Generic;
+using SelectionChangedEventArgs = Community.VisualStudio.Toolkit.SelectionChangedEventArgs;
 
 namespace OllamaLocalHostIntergration
 {
@@ -31,7 +29,7 @@ namespace OllamaLocalHostIntergration
             txtServerAddress.Text = "http://localhost:11434";
             
             // Handle Enter key in the input box
-            txtUserInput.KeyDown += TxtUserInput_KeyDown;
+            txtUserInput.KeyDown += TxtUserInputKeyDown;
 
             // Load initial code context
             _ = RefreshCodeContextAsync();
@@ -39,12 +37,12 @@ namespace OllamaLocalHostIntergration
             _ = RefreshModelsAsync();
         }
 
-        private async void SendMessage_Click(object sender, RoutedEventArgs e)
+        private async void SendMessageClick(object sender, RoutedEventArgs e)
         {
             await SendUserMessage();
         }
 
-        private async void TxtUserInput_KeyDown(object sender, KeyEventArgs e)
+        private async void TxtUserInputKeyDown(object sender, KeyEventArgs e)
         {
             if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
@@ -123,7 +121,7 @@ namespace OllamaLocalHostIntergration
             return null;
         }
 
-        private async void RefreshContext_Click(object sender, RoutedEventArgs e)
+        private async void RefreshContextClick(object sender, RoutedEventArgs e)
         {
             await RefreshCodeContextAsync();
         }
@@ -136,13 +134,13 @@ namespace OllamaLocalHostIntergration
             txtStatusBar.Text = "Code context updated.";
         }
 
-        private void ClearChat_Click(object sender, RoutedEventArgs e)
+        private void ClearChatClick(object sender, RoutedEventArgs e)
         {
             _chatMessages.Clear();
             txtStatusBar.Text = "Chat cleared.";
         }
 
-        private async void RefreshModels_Click(object sender, RoutedEventArgs e)
+        private async void RefreshModelsClick(object sender, RoutedEventArgs e)
         {
             await RefreshModelsAsync();
         }
@@ -160,7 +158,7 @@ namespace OllamaLocalHostIntergration
             txtStatusBar.Text = _availableModels.Count > 0 ? "Models loaded." : "No models found.";
         }
 
-        private void ComboModels_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ComboModelsSelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (comboModels.SelectedItem is string selectedModel)
             {

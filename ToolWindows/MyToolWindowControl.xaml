@@ -6,12 +6,16 @@
              xmlns:imaging="clr-namespace:Microsoft.VisualStudio.Imaging;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
-             xmlns:local="clr-namespace:OllamaLocalHostIntergration"
+             xmlns:converters="clr-namespace:OllamaLocalHostIntergration"
              toolkit:Themes.UseVsTheme="True"
              mc:Ignorable="d"
              d:DesignHeight="600"
              d:DesignWidth="500"
              Name="MyToolWindow">
+    <UserControl.Resources>
+        <converters:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
+    </UserControl.Resources>
+    
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -26,15 +30,15 @@
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center">
             <TextBlock Text="Server:" VerticalAlignment="Center" Margin="0,0,5,0"/>
             <TextBox x:Name="txtServerAddress" Width="220" Margin="0,0,10,0"/>
-            <Button Content="Clear Chat" Click="ClearChat_Click" Margin="0,0,5,0"/>
-            <Button Content="Refresh Context" Click="RefreshContext_Click"/>
+            <Button Content="Clear Chat" Click="ClearChatClick" Margin="0,0,5,0"/>
+            <Button Content="Refresh Context" Click="RefreshContextClick"/>
         </StackPanel>
 
         <!-- Model Selection -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,0,10,5" VerticalAlignment="Center">
             <TextBlock Text="Model:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <ComboBox x:Name="comboModels" Width="200" SelectionChanged="ComboModels_SelectionChanged"/>
-            <Button Content="Refresh Models" Click="RefreshModels_Click" Margin="10,0,0,0"/>
+            <ComboBox x:Name="comboModels" Width="200" SelectionChanged="ComboModelsSelectionChanged"/>
+            <Button Content="Refresh Models" Click="RefreshModelsClick" Margin="10,0,0,0"/>
         </StackPanel>
 
         <!-- Code Context (Collapsible) -->
@@ -89,15 +93,11 @@
             <Button Grid.Column="1"
                     Content="Send"
                     Padding="15,5"
-                    Click="SendMessage_Click"
+                    Click="SendMessageClick"
                     VerticalAlignment="Bottom"/>
         </Grid>
 
         <!-- Status Bar -->
         <TextBlock x:Name="txtStatusBar" Grid.Row="5" Margin="10,0,10,5" Foreground="DarkRed"/>
     </Grid>
-
-    <UserControl.Resources>
-        <local:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
-    </UserControl.Resources>
 </UserControl>
