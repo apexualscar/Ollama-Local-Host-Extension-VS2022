@@ -3,7 +3,7 @@
     <Metadata>
         <Identity Id="OllamaLocalHostIntergration.8bac462e-1d1b-4fa4-8aa8-a90a9316c80d" Version="1.0" Language="en-US" Publisher="Narek hagopian" />
         <DisplayName>Ollama Local Host Intergration</DisplayName>
-        <Description xml:space="preserve">Empty VSIX Project.</Description>
+        <Description xml:space="preserve">An extension that allows for locally ran LLM located on a server to interface and interact with visual studio</Description>
         <Icon>Resources\Icon.png</Icon>
         <PreviewImage>Resources\Icon.png</PreviewImage>
     </Metadata>

@@ -10,7 +10,7 @@ namespace OllamaLocalHostIntergration
     {
         public const string Id = "OllamaLocalHostIntergration.8bac462e-1d1b-4fa4-8aa8-a90a9316c80d";
         public const string Name = "Ollama Local Host Intergration";
-        public const string Description = @"Empty VSIX Project.";
+        public const string Description = @"An extension that allows for locally ran LLM located on a server to interface and interact with visual studio";
         public const string Language = "en-US";
         public const string Version = "1.0";
         public const string Author = "Narek hagopian";
