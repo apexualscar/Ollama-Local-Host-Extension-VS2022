@@ -225,8 +225,14 @@
                                  Height="60" 
                                  FontFamily="Consolas" 
                                  FontSize="10"
-                                 Margin="0,0,0,8"
+                                 Margin="0,0,0,4"
                                  Padding="6"/>
+                        <TextBlock x:Name="txtTokenCount"
+                                   Text="Tokens: 0 / ~8000"
+                                   FontSize="10"
+                                   Opacity="0.7"
+                                   Margin="0,0,0,8"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
                         <Button Content="Refresh Context" 
                                 Click="RefreshContextClick"
                                 HorizontalAlignment="Left"

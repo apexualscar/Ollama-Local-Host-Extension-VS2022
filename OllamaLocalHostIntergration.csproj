@@ -52,6 +52,9 @@
     <Compile Include="Converters\BoolToRoleConverter.cs" />
     <Compile Include="Converters\BoolToUserColorConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="Dialogs\DiffPreviewDialog.xaml.cs">
+      <DependentUpon>DiffPreviewDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
     <Compile Include="Models\InteractionMode.cs" />
@@ -82,6 +85,8 @@
     <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
     <None Include="PHASE_1_SUMMARY.md" />
     <None Include="PHASE_1_VERIFICATION.md" />
+    <None Include="PHASE_2_1_SUMMARY.md" />
+    <None Include="PHASE_2_PROGRESS.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
@@ -110,6 +115,9 @@
   <ItemGroup>
     <Compile Include="ToolWindows\MyToolWindow.cs" />
     <Page Include="Controls\RichChatMessageControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\DiffPreviewDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="ToolWindows\MyToolWindowControl.xaml">

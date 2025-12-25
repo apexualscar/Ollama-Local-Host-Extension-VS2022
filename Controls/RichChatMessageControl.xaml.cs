@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using OllamaLocalHostIntergration.Models;
 using OllamaLocalHostIntergration.Services;
+using OllamaLocalHostIntergration.Dialogs;
 using WpfMessageBox = System.Windows.MessageBox;
 using WpfMessageBoxButton = System.Windows.MessageBoxButton;
 using WpfMessageBoxImage = System.Windows.MessageBoxImage;
@@ -89,18 +90,18 @@ namespace OllamaLocalHostIntergration.Controls
                 
                 try
                 {
-                    // If there's an associated CodeEdit, use it
+                    // If there's an associated CodeEdit, show diff preview
                     if (message.AssociatedCodeEdit != null)
                     {
-                        // Show confirmation dialog
-                        var result = WpfMessageBox.Show(
-                            "Apply this code change to the active editor?",
-                            "Confirm Code Application",
-                            WpfMessageBoxButton.YesNo,
-                            WpfMessageBoxImage.Question
-                        );
+                        // Show diff preview dialog
+                        var diffDialog = new DiffPreviewDialog(message.AssociatedCodeEdit)
+                        {
+                            Owner = Window.GetWindow(this)
+                        };
                         
-                        if (result == WpfMessageBoxResult.Yes)
+                        bool? result = diffDialog.ShowDialog();
+                        
+                        if (result == true && diffDialog.WasApplied)
                         {
                             bool success = await _codeModService.ApplyCodeEditAsync(message.AssociatedCodeEdit);
                             
@@ -108,17 +109,27 @@ namespace OllamaLocalHostIntergration.Controls
                             {
                                 button.Content = "? Applied!";
                                 button.IsEnabled = false;
-                                WpfMessageBox.Show("Code successfully applied!", "Success", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                                WpfMessageBox.Show(
+                                    "Code successfully applied to the active editor!",
+                                    "Success",
+                                    WpfMessageBoxButton.OK,
+                                    WpfMessageBoxImage.Information
+                                );
                             }
                             else
                             {
-                                WpfMessageBox.Show("Failed to apply code. Please check the active editor.", "Error", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                                WpfMessageBox.Show(
+                                    "Failed to apply code. Please ensure you have an active document open.",
+                                    "Error",
+                                    WpfMessageBoxButton.OK,
+                                    WpfMessageBoxImage.Error
+                                );
                             }
                         }
                     }
                     else
                     {
-                        // Direct code application without CodeEdit
+                        // Direct code application without CodeEdit (fallback)
                         var result = WpfMessageBox.Show(
                             "Apply this code to the active editor? This will replace the current selection or document.",
                             "Confirm Code Application",
@@ -140,18 +151,33 @@ namespace OllamaLocalHostIntergration.Controls
                             {
                                 button.Content = "? Applied!";
                                 button.IsEnabled = false;
-                                WpfMessageBox.Show("Code successfully applied!", "Success", WpfMessageBoxButton.OK, WpfMessageBoxImage.Information);
+                                WpfMessageBox.Show(
+                                    "Code successfully applied!",
+                                    "Success",
+                                    WpfMessageBoxButton.OK,
+                                    WpfMessageBoxImage.Information
+                                );
                             }
                             else
                             {
-                                WpfMessageBox.Show("Failed to apply code. Please check the active editor.", "Error", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                                WpfMessageBox.Show(
+                                    "Failed to apply code. Please check the active editor.",
+                                    "Error",
+                                    WpfMessageBoxButton.OK,
+                                    WpfMessageBoxImage.Error
+                                );
                             }
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    WpfMessageBox.Show($"Error applying code: {ex.Message}", "Error", WpfMessageBoxButton.OK, WpfMessageBoxImage.Error);
+                    WpfMessageBox.Show(
+                        $"Error applying code: {ex.Message}",
+                        "Error",
+                        WpfMessageBoxButton.OK,
+                        WpfMessageBoxImage.Error
+                    );
                 }
             }
         }

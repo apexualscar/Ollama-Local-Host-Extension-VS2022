@@ -19,6 +19,7 @@ namespace OllamaLocalHostIntergration
         private readonly ModeManager _modeManager;
         private readonly CodeModificationService _codeModService;
         private readonly MessageParserService _messageParser;
+        private readonly PromptBuilder _promptBuilder;
         private ObservableCollection<ChatMessage> _chatMessages;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -34,6 +35,7 @@ namespace OllamaLocalHostIntergration
             _modeManager = new ModeManager();
             _codeModService = new CodeModificationService(_codeEditorService);
             _messageParser = new MessageParserService();
+            _promptBuilder = new PromptBuilder();
             _chatMessages = new ObservableCollection<ChatMessage>();
             chatMessagesPanel.ItemsSource = _chatMessages;
 
@@ -178,6 +180,9 @@ namespace OllamaLocalHostIntergration
                 txtStatusBar.Text = responseChatMessage.HasCodeBlocks 
                     ? $"Ready ({responseChatMessage.CodeBlocks.Count} code block(s))" 
                     : "Ready";
+                
+                // Update token count
+                UpdateTokenCount();
             }
             catch (Exception ex)
             {
@@ -230,8 +235,35 @@ namespace OllamaLocalHostIntergration
             
             txtCodeContext.Text = _currentCodeContext;
             
+            // Update token count
+            UpdateTokenCount();
+            
             int contextLength = _currentCodeContext.Length;
             txtStatusBar.Text = contextLength > 0 ? $"Code context updated ({contextLength} characters)" : "No code context";
+        }
+
+        private void UpdateTokenCount()
+        {
+            int tokenCount = _promptBuilder.EstimateTokenCount(_currentCodeContext);
+            int conversationTokens = _ollamaService.GetConversationMessageCount() * 50; // Rough estimate
+            int totalTokens = tokenCount + conversationTokens;
+            
+            // Color code based on usage
+            if (totalTokens > 6000)
+            {
+                txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.OrangeRed);
+                txtTokenCount.Text = $"⚠ Tokens: ~{totalTokens} / 8000 (Approaching limit)";
+            }
+            else if (totalTokens > 4000)
+            {
+                txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
+                txtTokenCount.Text = $"Tokens: ~{totalTokens} / 8000";
+            }
+            else
+            {
+                txtTokenCount.Foreground = System.Windows.SystemColors.ControlTextBrush;
+                txtTokenCount.Text = $"Tokens: ~{totalTokens} / 8000";
+            }
         }
 
         private void ClearChatClick(object sender, RoutedEventArgs e)

@@ -17,26 +17,26 @@ A Visual Studio extension that provides GitHub Copilot-like functionality using 
   - ? Code Editor Service (full VS integration)
   - ? Code Modification Service (AI response parsing)
   - ? Prompt Builder Service (advanced prompt engineering)
-- **PHASE 2 IN PROGRESS:** UI/UX Enhancements
+- **PHASE 2 COMPLETE:** UI/UX Enhancements
   - ? Enhanced ChatMessage model with code block support
   - ? MessageParserService for code extraction
   - ? RichChatMessageControl with copy/apply buttons
   - ? Integration with main tool window
-  - ?? Diff preview dialog (TODO)
-  - ?? Syntax highlighting (TODO)
-  - ?? Token count indicator (TODO)
+  - ? Diff preview dialog with side-by-side & unified views
+  - ? Token count indicator with color-coded warnings
+  - ? Context management UI enhancements
 
 ? **Missing Features for Full Copilot Clone:**
 - ~~Ask Mode vs Agent Mode distinction~~ ? DONE
-- Code editing capabilities (Agent mode) - PARTIALLY DONE (Apply button working)
+- Code editing capabilities (Agent mode) - ? DONE (Apply with diff preview)
 - Inline code suggestions
-- Context menu integration
-- Keyboard shortcuts
-- Conversation history persistence
+- Context menu integration - TODO
+- Keyboard shortcuts - TODO
+- Conversation history persistence - TODO
 - ~~Better prompt engineering for code tasks~~ ? DONE
-- Code diff preview before applying changes - IN PROGRESS
-- Multi-file context awareness
-- Solution/Project-wide code analysis
+- ~~Code diff preview before applying changes~~ ? DONE
+- Multi-file context awareness - PARTIALLY DONE
+- Solution/Project-wide code analysis - TODO
 
 ---
 
