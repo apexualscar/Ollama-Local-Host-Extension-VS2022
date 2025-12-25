@@ -7,6 +7,7 @@
              xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
              xmlns:local="clr-namespace:OllamaLocalHostIntergration"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              toolkit:Themes.UseVsTheme="True"
              mc:Ignorable="d"
              d:DesignHeight="600"
@@ -28,7 +29,7 @@
         </Grid.RowDefinitions>
 
         <!-- Mode Selection -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center" Background="{DynamicResource {x:Static SystemColors.ControlBrushKey}}">
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center">
             <TextBlock Text="Mode:" VerticalAlignment="Center" Margin="5,0,10,0" FontWeight="Bold"/>
             <RadioButton x:Name="radioAskMode" Content="Ask Mode" IsChecked="True" VerticalAlignment="Center" Margin="0,0,15,0" Checked="ModeChanged"/>
             <RadioButton x:Name="radioAgentMode" Content="Agent Mode" VerticalAlignment="Center" Margin="0,0,10,0" Checked="ModeChanged"/>
@@ -52,7 +53,7 @@
 
         <!-- Code Context (Collapsible) -->
         <Expander Grid.Row="3" Header="Current Code Context" IsExpanded="False" Margin="10,0,10,5">
-            <TextBox x:Name="txtCodeContext" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80" FontFamily="Consolas"/>
+            <TextBox x:Name="txtCodeContext" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80" FontFamily="Consolas" FontSize="11"/>
         </Expander>
 
         <!-- Chat Messages -->
@@ -62,9 +63,9 @@
                     <DataTemplate>
                         <Border Margin="0,5" 
                                 BorderThickness="1"
-                                BorderBrush="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                                Background="{DynamicResource {x:Static SystemColors.WindowBrushKey}}">
-                            <Grid Margin="5">
+                                BorderBrush="Gray"
+                                Padding="5">
+                            <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
@@ -73,13 +74,14 @@
                                 <TextBlock Grid.Row="0" 
                                          Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
                                          FontWeight="Bold"
+                                         FontSize="12"
                                          Margin="0,0,0,5"/>
                                 <!-- Message Content -->
                                 <TextBlock Grid.Row="1" 
                                          Text="{Binding Content}"
                                          TextWrapping="Wrap"
                                          FontFamily="Consolas"
-                                         FontSize="12"/>
+                                         FontSize="11"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -101,7 +103,8 @@
                      MinHeight="50"
                      MaxHeight="100"
                      VerticalScrollBarVisibility="Auto"
-                     FontFamily="Consolas"/>
+                     FontFamily="Consolas"
+                     FontSize="11"/>
             <Button Grid.Column="1"
                     Content="Send"
                     Padding="15,5"
@@ -110,6 +113,6 @@
         </Grid>
 
         <!-- Status Bar -->
-        <TextBlock x:Name="txtStatusBar" Grid.Row="6" Margin="10,0,10,5" Foreground="DarkRed"/>
+        <TextBlock x:Name="txtStatusBar" Grid.Row="6" Margin="10,0,10,5" Foreground="DarkRed" FontSize="11"/>
     </Grid>
 </UserControl>

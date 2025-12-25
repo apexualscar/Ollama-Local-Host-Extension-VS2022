@@ -68,6 +68,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DEPLOYMENT_PLAN.md" />
+    <None Include="diagnose.ps1" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
@@ -77,6 +78,10 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
+    <None Include="START_HERE.md" />
+    <None Include="TESTING_GUIDE.md" />
+    <None Include="TROUBLESHOOTING.md" />
+    <None Include="VERIFICATION.md" />
   </ItemGroup>
   <ItemGroup>
     <VSCTCompile Include="VSCommandTable.vsct">

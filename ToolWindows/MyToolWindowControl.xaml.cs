@@ -58,6 +58,9 @@ namespace OllamaLocalHostIntergration
 
         private void ModeChanged(object sender, RoutedEventArgs e)
         {
+            if (_modeManager == null)
+                return; // Or handle initialization differently
+
             if (radioAskMode.IsChecked == true)
             {
                 _modeManager.SwitchToAskMode();
