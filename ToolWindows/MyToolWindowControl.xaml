@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="OllamaLocalHostIntergration.MyToolWindowControl"
+<UserControl x:Class="OllamaLocalHostIntergration.MyToolWindowControl"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -115,55 +115,99 @@
                               VerticalContentAlignment="Center"
                               Margin="0,0,8,0"
                               Padding="8,4"
+                              Background="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"
+                              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                              BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"
                               SelectionChanged="ComboMode_SelectionChanged">
                         <ComboBoxItem Content="Ask" IsSelected="True" Tag="Ask"/>
                         <ComboBoxItem Content="Agent" Tag="Agent"/>
                     </ComboBox>
                     
-                    <!-- Model Dropdown -->
-                    <ComboBox x:Name="comboModels" 
-                              Grid.Column="1"
-                              Height="32"
-                              FontSize="11"
-                              VerticalAlignment="Center"
-                              VerticalContentAlignment="Center"
-                              Margin="0,0,8,0"
-                              Padding="8,4"
-                              SelectionChanged="ComboModels_SelectionChanged"/>
+                    <!-- Model Dropdown with Enhanced Display -->
+                    <Grid Grid.Column="1" Margin="0,0,8,0">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        
+                        <!-- Model Icon/Label -->
+                        <Border Grid.Column="0"
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
+                                CornerRadius="3"
+                                Padding="6,4"
+                                Height="32"
+                                VerticalAlignment="Center"
+                                Margin="0,0,4,0">
+                            <TextBlock Text="??"
+                                       FontSize="14"
+                                       VerticalAlignment="Center"
+                                       ToolTip="Active AI Model"/>
+                        </Border>
+                        
+                        <!-- Model ComboBox -->
+                        <ComboBox x:Name="comboModels" 
+                                  Grid.Column="1"
+                                  Height="32"
+                                  FontSize="11"
+                                  VerticalAlignment="Center"
+                                  VerticalContentAlignment="Center"
+                                  Padding="8,4"
+                                  Background="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"
+                                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                  BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"
+                                  SelectionChanged="ComboModels_SelectionChanged">
+                            <ComboBox.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="??" 
+                                                   FontSize="12" 
+                                                   Margin="0,0,6,0"
+                                                   VerticalAlignment="Center"/>
+                                        <TextBlock Text="{Binding}" 
+                                                   FontSize="11"
+                                                   VerticalAlignment="Center"/>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ComboBox.ItemTemplate>
+                        </ComboBox>
+                    </Grid>
                     
                     <!-- Refresh Models Button -->
                     <Button Grid.Column="2"
-                            Content="↻"
+                            Content="??"
                             Click="RefreshModelsClick"
                             Width="32"
                             Height="32"
                             Margin="0,0,4,0"
                             VerticalAlignment="Center"
                             ToolTip="Refresh models from Ollama server"
-                            FontSize="16"
-                            FontWeight="Bold"
+                            FontSize="14"
                             Padding="0"
                             VerticalContentAlignment="Center"
-                            HorizontalContentAlignment="Center"/>
+                            HorizontalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                     
                     <!-- Settings Button -->
                     <Button Grid.Column="3"
                             x:Name="btnSettings"
-                            Content="⚙"
+                            Content="??"
                             Width="32"
                             Height="32"
                             Margin="0,0,4,0"
                             VerticalAlignment="Center"
                             ToolTip="Settings"
-                            FontSize="16"
+                            FontSize="14"
                             Padding="0"
                             VerticalContentAlignment="Center"
                             HorizontalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
                             Click="SettingsClick"/>
                     
                     <!-- Clear Chat Button -->
                     <Button Grid.Column="4"
-                            Content="🗑"
+                            Content="???"
                             Click="ClearChatClick"
                             Width="32"
                             Height="32"
@@ -172,7 +216,9 @@
                             FontSize="14"
                             Padding="0"
                             VerticalContentAlignment="Center"
-                            HorizontalContentAlignment="Center"/>
+                            HorizontalContentAlignment="Center"
+                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                 </Grid>
                 
                 <!-- Settings Panel (Collapsible) -->
@@ -209,7 +255,10 @@
                                      FontSize="11"
                                      Height="26"
                                      VerticalContentAlignment="Center"
-                                     Padding="6,0"/>
+                                     Padding="6,0"
+                                     Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                     BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
                         </Grid>
                         
                         <!-- Code Context -->
@@ -226,7 +275,10 @@
                                  FontFamily="Consolas" 
                                  FontSize="10"
                                  Margin="0,0,0,4"
-                                 Padding="6"/>
+                                 Padding="6"
+                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
                         <TextBlock x:Name="txtTokenCount"
                                    Text="Tokens: 0 / ~8000"
                                    FontSize="10"
@@ -237,7 +289,9 @@
                                 Click="RefreshContextClick"
                                 HorizontalAlignment="Left"
                                 Padding="10,6"
-                                FontSize="11"/>
+                                FontSize="11"
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                     </StackPanel>
                 </Border>
                 
@@ -290,11 +344,41 @@
                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
                 BorderThickness="0,1,0,0"
                 Padding="16,6">
-            <TextBlock x:Name="txtStatusBar" 
-                       Text="Ready"
-                       FontSize="10"
-                       Opacity="0.7"
-                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Status Text -->
+                <TextBlock x:Name="txtStatusBar" 
+                           Grid.Column="0"
+                           Text="Ready"
+                           FontSize="10"
+                           Opacity="0.7"
+                           VerticalAlignment="Center"
+                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                
+                <!-- Selected Model Indicator -->
+                <StackPanel Grid.Column="1" 
+                            Orientation="Horizontal"
+                            VerticalAlignment="Center">
+                    <TextBlock Text="Model: "
+                               FontSize="10"
+                               Opacity="0.6"
+                               Margin="0,0,4,0"
+                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                    <Border Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
+                            CornerRadius="3"
+                            Padding="6,2">
+                        <TextBlock x:Name="txtSelectedModel"
+                                   Text="No model selected"
+                                   FontSize="10"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentDarkKey}}"/>
+                    </Border>
+                </StackPanel>
+            </Grid>
         </Border>
     </Grid>
 </UserControl>

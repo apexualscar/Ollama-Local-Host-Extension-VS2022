@@ -56,9 +56,25 @@ namespace OllamaLocalHostIntergration.Services
                 }
                 return models;
             }
-            catch
+            catch (HttpRequestException ex)
             {
-                return new List<string>();
+                // Network/connection error
+                throw new Exception($"Cannot connect to Ollama server at {_serverAddress}. Make sure Ollama is running. Details: {ex.Message}", ex);
+            }
+            catch (TaskCanceledException ex)
+            {
+                // Timeout
+                throw new Exception($"Connection to Ollama server at {_serverAddress} timed out. Check if the server is responding.", ex);
+            }
+            catch (JsonException ex)
+            {
+                // JSON parsing error
+                throw new Exception($"Failed to parse response from Ollama server. The server might be returning an unexpected format. Details: {ex.Message}", ex);
+            }
+            catch (Exception ex)
+            {
+                // Any other error
+                throw new Exception($"Unexpected error while fetching models from {_serverAddress}: {ex.Message}", ex);
             }
         }
 

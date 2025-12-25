@@ -20,6 +20,7 @@ namespace OllamaLocalHostIntergration
         private readonly CodeModificationService _codeModService;
         private readonly MessageParserService _messageParser;
         private readonly PromptBuilder _promptBuilder;
+        private readonly SettingsService _settingsService;
         private ObservableCollection<ChatMessage> _chatMessages;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -36,17 +37,24 @@ namespace OllamaLocalHostIntergration
             _codeModService = new CodeModificationService(_codeEditorService);
             _messageParser = new MessageParserService();
             _promptBuilder = new PromptBuilder();
+            _settingsService = new SettingsService();
             _chatMessages = new ObservableCollection<ChatMessage>();
             chatMessagesPanel.ItemsSource = _chatMessages;
 
-            // Set default server address
-            txtServerAddress.Text = "http://localhost:11434";
+            // Load saved server address or use default
+            string savedServerAddress = _settingsService.GetServerAddress();
+            txtServerAddress.Text = savedServerAddress;
+            _ollamaService.UpdateServerAddress(savedServerAddress);
             
             // Handle Enter key in the input box
             txtUserInput.KeyDown += TxtUserInputKeyDown;
 
             // Subscribe to mode changes
             _modeManager.OnModeChanged += OnModeChanged;
+
+            // Handle server address text changes to auto-save
+            txtServerAddress.LostFocus += TxtServerAddress_LostFocus;
+            txtServerAddress.KeyDown += TxtServerAddress_KeyDown;
 
             // Initialize mode
             _modeManager.SwitchToAskMode();
@@ -57,6 +65,33 @@ namespace OllamaLocalHostIntergration
             _ = RefreshCodeContextAsync();
             // Load models from Ollama server
             _ = RefreshModelsAsync();
+        }
+
+        private void TxtServerAddress_LostFocus(object sender, RoutedEventArgs e)
+        {
+            // Auto-save when user leaves the text box
+            SaveServerAddress();
+        }
+
+        private void TxtServerAddress_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Auto-save when user presses Enter
+            if (e.Key == Key.Enter)
+            {
+                SaveServerAddress();
+                e.Handled = true;
+            }
+        }
+
+        private void SaveServerAddress()
+        {
+            string serverAddress = txtServerAddress.Text;
+            if (!string.IsNullOrWhiteSpace(serverAddress))
+            {
+                _settingsService.SaveServerAddress(serverAddress);
+                _ollamaService.UpdateServerAddress(serverAddress);
+                txtStatusBar.Text = $"Server address saved: {serverAddress}";
+            }
         }
 
         private void OnModeChanged(InteractionMode mode)
@@ -283,6 +318,11 @@ namespace OllamaLocalHostIntergration
             try
             {
                 txtStatusBar.Text = "Fetching models from Ollama server...";
+                txtSelectedModel.Text = "Loading...";
+                
+                // Update server address from UI
+                string serverAddress = txtServerAddress.Text;
+                _ollamaService.UpdateServerAddress(serverAddress);
                 
                 // Get all available models from the Ollama server
                 _availableModels = await _ollamaService.GetAvailableModelsAsync();
@@ -291,19 +331,46 @@ namespace OllamaLocalHostIntergration
                 
                 if (_availableModels.Count > 0)
                 {
-                    comboModels.SelectedIndex = 0;
-                    _ollamaService.SetModel(_availableModels[0]);
+                    // Try to restore previously selected model
+                    string savedModel = _settingsService.GetSelectedModel();
+                    int selectedIndex = 0;
+                    
+                    if (!string.IsNullOrEmpty(savedModel) && _availableModels.Contains(savedModel))
+                    {
+                        selectedIndex = _availableModels.IndexOf(savedModel);
+                    }
+                    
+                    comboModels.SelectedIndex = selectedIndex;
+                    _ollamaService.SetModel(_availableModels[selectedIndex]);
+                    txtSelectedModel.Text = _availableModels[selectedIndex];
                     txtStatusBar.Text = $"Loaded {_availableModels.Count} model(s) from server";
                 }
                 else
                 {
-                    txtStatusBar.Text = "No models found. Make sure Ollama is running.";
+                    txtSelectedModel.Text = "No models";
+                    txtStatusBar.Text = "No models found. Make sure Ollama is running and has models installed (run: ollama pull codellama)";
                 }
             }
             catch (Exception ex)
             {
+                txtSelectedModel.Text = "Error";
                 txtStatusBar.Text = $"Failed to fetch models: {ex.Message}";
                 _availableModels.Clear();
+                
+                // Show detailed error message to user
+                System.Windows.MessageBox.Show(
+                    $"Could not connect to Ollama server.\n\n" +
+                    $"Server: {txtServerAddress.Text}\n\n" +
+                    $"Error: {ex.Message}\n\n" +
+                    $"Troubleshooting:\n" +
+                    $"1. Make sure Ollama is running (ollama serve)\n" +
+                    $"2. Check that models are installed (ollama list)\n" +
+                    $"3. Verify server address is correct\n" +
+                    $"4. Test with: curl {txtServerAddress.Text}/api/tags",
+                    "Ollama Connection Error",
+                    System.Windows.MessageBoxButton.OK,
+                    System.Windows.MessageBoxImage.Error
+                );
             }
         }
 
@@ -315,7 +382,11 @@ namespace OllamaLocalHostIntergration
             if (comboModels.SelectedItem is string selectedModel)
             {
                 _ollamaService.SetModel(selectedModel);
+                txtSelectedModel.Text = selectedModel;
                 txtStatusBar.Text = $"Using {selectedModel}";
+                
+                // Save the selected model for next session
+                _settingsService.SaveSelectedModel(selectedModel);
             }
         }
 

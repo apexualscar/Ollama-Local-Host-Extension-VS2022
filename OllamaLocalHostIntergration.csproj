@@ -70,6 +70,7 @@
     <Compile Include="Services\ModeManager.cs" />
     <Compile Include="Services\OllamaService.cs" />
     <Compile Include="Services\PromptBuilder.cs" />
+    <Compile Include="Services\SettingsService.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -82,9 +83,14 @@
     </Compile>
   </ItemGroup>
   <ItemGroup>
+    <None Include="BUILD_FIX_INSTRUCTIONS.md" />
+    <None Include="DEBUG_FETCH_MODELS.md" />
     <None Include="DEPLOYMENT_PLAN.md" />
     <None Include="diagnose-ollama.ps1" />
     <None Include="diagnose.ps1" />
+    <None Include="EXTENSION_NOT_DETECTING.md" />
+    <None Include="fix-xaml-link.ps1" />
+    <None Include="FIX_BUILD_NOW.md" />
     <None Include="OLLAMA_TROUBLESHOOTING.md" />
     <None Include="PHASE_1_COMPLETION.md" />
     <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
@@ -99,6 +105,10 @@
     <None Include="README_UPDATE_SUMMARY.md" />
     <None Include="REMOTE_OLLAMA_SETUP.md" />
     <None Include="REMOTE_SETUP_SUMMARY.md" />
+    <None Include="SETTINGS_FEATURE_COMPLETE.md" />
+    <None Include="SETTINGS_IMPLEMENTATION_COMPLETE.md" />
+    <None Include="SETTINGS_PERSISTENCE.md" />
+    <None Include="SETTINGS_QUICK_START.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
@@ -110,9 +120,12 @@
     </Content>
     <None Include="START_HERE.md" />
     <None Include="STYLING_FIXES.md" />
+    <None Include="STYLING_FIX_COMPLETE.md" />
     <None Include="TESTING_GUIDE.md" />
     <None Include="TROUBLESHOOTING.md" />
+    <None Include="TROUBLESHOOTING_FLOWCHART.md" />
     <None Include="UI_COPILOT_STYLE_UPDATE.md" />
+    <None Include="UI_MODEL_DISPLAY_UPDATE.md" />
     <None Include="UI_UPDATE_SUMMARY.md" />
     <None Include="UI_VISUAL_COMPARISON.md" />
     <None Include="VERIFICATION.md" />

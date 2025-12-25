@@ -97,6 +97,8 @@
                                                 Margin="0,0,4,0"
                                                 ToolTip="Copy code to clipboard"
                                                 Tag="{Binding Code}"
+                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
                                                 Click="CopyCode_Click"/>
                                         <Button x:Name="btnApplyCode"
                                                 Content="? Apply to Editor"
@@ -104,6 +106,8 @@
                                                 FontSize="10"
                                                 ToolTip="Apply this code to the active editor"
                                                 Tag="{Binding Code}"
+                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
                                                 Click="ApplyCode_Click"
                                                 Visibility="{Binding Path=DataContext.IsApplicable, 
                                                             RelativeSource={RelativeSource AncestorType=UserControl}, 

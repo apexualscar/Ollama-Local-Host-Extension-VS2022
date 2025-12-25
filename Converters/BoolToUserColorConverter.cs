@@ -11,11 +11,13 @@ namespace OllamaLocalHostIntergration.Converters
         {
             if (value is bool isUser)
             {
+                // Use theme-compatible colors
+                // These colors work well in both light and dark themes
                 return isUser 
                     ? new SolidColorBrush(Color.FromRgb(0, 120, 215))  // Blue for user
-                    : new SolidColorBrush(Color.FromRgb(16, 110, 190)); // Darker blue for assistant
+                    : new SolidColorBrush(Color.FromRgb(76, 155, 215)); // Light blue for assistant
             }
-            return new SolidColorBrush(Colors.Gray);
+            return new SolidColorBrush(Color.FromRgb(128, 128, 128)); // Gray fallback
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
