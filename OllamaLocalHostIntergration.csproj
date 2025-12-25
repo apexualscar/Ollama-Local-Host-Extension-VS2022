@@ -45,7 +45,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Converters\BoolToIconConverter.cs" />
     <Compile Include="Converters\BoolToRoleConverter.cs" />
+    <Compile Include="Converters\BoolToUserColorConverter.cs" />
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
     <Compile Include="Models\InteractionMode.cs" />
@@ -79,8 +81,12 @@
       <IncludeInVSIX>true</IncludeInVSIX>
     </Content>
     <None Include="START_HERE.md" />
+    <None Include="STYLING_FIXES.md" />
     <None Include="TESTING_GUIDE.md" />
     <None Include="TROUBLESHOOTING.md" />
+    <None Include="UI_COPILOT_STYLE_UPDATE.md" />
+    <None Include="UI_UPDATE_SUMMARY.md" />
+    <None Include="UI_VISUAL_COMPARISON.md" />
     <None Include="VERIFICATION.md" />
   </ItemGroup>
   <ItemGroup>

@@ -7,81 +7,74 @@
              xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
              xmlns:local="clr-namespace:OllamaLocalHostIntergration"
+             xmlns:converters="clr-namespace:OllamaLocalHostIntergration.Converters"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              toolkit:Themes.UseVsTheme="True"
              mc:Ignorable="d"
              d:DesignHeight="600"
-             d:DesignWidth="500"
-             Name="MyToolWindow">
+             d:DesignWidth="400"
+             Name="MyToolWindow"
+             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
     <UserControl.Resources>
         <local:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
+        <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+        <converters:BoolToUserColorConverter x:Key="BoolToUserColorConverter"/>
     </UserControl.Resources>
     
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <!-- Mode Selection -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center">
-            <TextBlock Text="Mode:" VerticalAlignment="Center" Margin="5,0,10,0" FontWeight="Bold"/>
-            <RadioButton x:Name="radioAskMode" Content="Ask Mode" IsChecked="True" VerticalAlignment="Center" Margin="0,0,15,0" Checked="ModeChanged"/>
-            <RadioButton x:Name="radioAgentMode" Content="Agent Mode" VerticalAlignment="Center" Margin="0,0,10,0" Checked="ModeChanged"/>
-            <TextBlock x:Name="txtModeDescription" Text="(Read-only Q&amp;A)" VerticalAlignment="Center" Margin="10,0,0,0" FontStyle="Italic" Foreground="Gray"/>
-        </StackPanel>
-
-        <!-- Server Configuration and Actions -->
-        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="10,5" VerticalAlignment="Center">
-            <TextBlock Text="Server:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <TextBox x:Name="txtServerAddress" Width="220" Margin="0,0,10,0"/>
-            <Button Content="Clear Chat" Click="ClearChatClick" Margin="0,0,5,0"/>
-            <Button Content="Refresh Context" Click="RefreshContextClick"/>
-        </StackPanel>
-
-        <!-- Model Selection -->
-        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="10,0,10,5" VerticalAlignment="Center">
-            <TextBlock Text="Model:" VerticalAlignment="Center" Margin="0,0,5,0"/>
-            <ComboBox x:Name="comboModels" Width="200" SelectionChanged="ComboModels_SelectionChanged"/>
-            <Button Content="Refresh Models" Click="RefreshModelsClick" Margin="10,0,0,0"/>
-        </StackPanel>
-
-        <!-- Code Context (Collapsible) -->
-        <Expander Grid.Row="3" Header="Current Code Context" IsExpanded="False" Margin="10,0,10,5">
-            <TextBox x:Name="txtCodeContext" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" Height="80" FontFamily="Consolas" FontSize="11"/>
-        </Expander>
-
-        <!-- Chat Messages -->
-        <ScrollViewer x:Name="chatMessagesScroll" Grid.Row="4" Margin="10,5" VerticalScrollBarVisibility="Auto">
+        <!-- Chat Messages Area -->
+        <ScrollViewer x:Name="chatMessagesScroll" 
+                      Grid.Row="0" 
+                      VerticalScrollBarVisibility="Auto"
+                      Padding="16,16,16,8"
+                      Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
             <ItemsControl x:Name="chatMessagesPanel">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,5" 
-                                BorderThickness="1"
-                                BorderBrush="Gray"
-                                Padding="5">
+                        <Border Margin="0,0,0,20" 
+                                Padding="0">
                             <Grid>
                                 <Grid.RowDefinitions>
                                     <RowDefinition Height="Auto"/>
                                     <RowDefinition Height="*"/>
                                 </Grid.RowDefinitions>
-                                <!-- Header -->
-                                <TextBlock Grid.Row="0" 
-                                         Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
-                                         FontWeight="Bold"
-                                         FontSize="12"
-                                         Margin="0,0,0,5"/>
+                                
+                                <!-- Header with icon -->
+                                <StackPanel Grid.Row="0" 
+                                           Orientation="Horizontal"
+                                           Margin="0,0,0,8">
+                                    <Border Width="24" 
+                                            Height="24" 
+                                            CornerRadius="12"
+                                            Background="{Binding IsUser, Converter={StaticResource BoolToUserColorConverter}}"
+                                            Margin="0,0,10,0">
+                                        <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToIconConverter}}"
+                                                   Foreground="White"
+                                                   FontSize="12"
+                                                   HorizontalAlignment="Center"
+                                                   VerticalAlignment="Center"/>
+                                    </Border>
+                                    <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
+                                               FontWeight="SemiBold"
+                                               FontSize="13"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                                </StackPanel>
+                                
                                 <!-- Message Content -->
                                 <TextBlock Grid.Row="1" 
                                          Text="{Binding Content}"
                                          TextWrapping="Wrap"
-                                         FontFamily="Consolas"
-                                         FontSize="11"/>
+                                         FontSize="12"
+                                         LineHeight="22"
+                                         Margin="34,0,0,0"
+                                         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
                             </Grid>
                         </Border>
                     </DataTemplate>
@@ -89,30 +82,213 @@
             </ItemsControl>
         </ScrollViewer>
 
-        <!-- Input Area -->
-        <Grid Grid.Row="5" Margin="10,5">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="Auto"/>
-            </Grid.ColumnDefinitions>
-            <TextBox x:Name="txtUserInput" 
-                     Grid.Column="0"
-                     Margin="0,0,5,0"
-                     AcceptsReturn="True"
-                     TextWrapping="Wrap"
-                     MinHeight="50"
-                     MaxHeight="100"
-                     VerticalScrollBarVisibility="Auto"
-                     FontFamily="Consolas"
-                     FontSize="11"/>
-            <Button Grid.Column="1"
-                    Content="Send"
-                    Padding="15,5"
-                    Click="SendMessageClick"
-                    VerticalAlignment="Bottom"/>
-        </Grid>
+        <!-- Input Area with Controls (Copilot-style at bottom) -->
+        <Border Grid.Row="1" 
+                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                BorderThickness="0,1,0,0"
+                Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+                Padding="16,12">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+                
+                <!-- Toolbar with Mode, Model, and Settings -->
+                <Grid Grid.Row="0" Margin="0,0,0,8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                        <ColumnDefinition Width="Auto"/>
+                    </Grid.ColumnDefinitions>
+                    
+                    <!-- Mode Dropdown -->
+                    <ComboBox x:Name="comboMode" 
+                              Grid.Column="0"
+                              Width="90"
+                              Height="32"
+                              FontSize="11"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Margin="0,0,8,0"
+                              Padding="8,4"
+                              SelectionChanged="ComboMode_SelectionChanged">
+                        <ComboBoxItem Content="Ask" IsSelected="True" Tag="Ask"/>
+                        <ComboBoxItem Content="Agent" Tag="Agent"/>
+                    </ComboBox>
+                    
+                    <!-- Model Dropdown -->
+                    <ComboBox x:Name="comboModels" 
+                              Grid.Column="1"
+                              Height="32"
+                              FontSize="11"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Margin="0,0,8,0"
+                              Padding="8,4"
+                              SelectionChanged="ComboModels_SelectionChanged"/>
+                    
+                    <!-- Refresh Models Button -->
+                    <Button Grid.Column="2"
+                            Content="↻"
+                            Click="RefreshModelsClick"
+                            Width="32"
+                            Height="32"
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            ToolTip="Refresh models from Ollama server"
+                            FontSize="16"
+                            FontWeight="Bold"
+                            Padding="0"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center"/>
+                    
+                    <!-- Settings Button -->
+                    <Button Grid.Column="3"
+                            x:Name="btnSettings"
+                            Content="⚙"
+                            Width="32"
+                            Height="32"
+                            Margin="0,0,4,0"
+                            VerticalAlignment="Center"
+                            ToolTip="Settings"
+                            FontSize="16"
+                            Padding="0"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center"
+                            Click="SettingsClick"/>
+                    
+                    <!-- Clear Chat Button -->
+                    <Button Grid.Column="4"
+                            Content="🗑"
+                            Click="ClearChatClick"
+                            Width="32"
+                            Height="32"
+                            VerticalAlignment="Center"
+                            ToolTip="Clear chat history"
+                            FontSize="14"
+                            Padding="0"
+                            VerticalContentAlignment="Center"
+                            HorizontalContentAlignment="Center"/>
+                </Grid>
+                
+                <!-- Settings Panel (Collapsible) -->
+                <Border Grid.Row="1" 
+                        x:Name="settingsPanel"
+                        Visibility="Collapsed"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
+                    <StackPanel>
+                        <TextBlock Text="Settings" 
+                                   FontSize="11" 
+                                   FontWeight="SemiBold" 
+                                   Margin="0,0,0,8"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                        
+                        <!-- Server Address -->
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <TextBlock Grid.Column="0" 
+                                       Text="Server:" 
+                                       VerticalAlignment="Center" 
+                                       Margin="0,0,8,0"
+                                       FontSize="11"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                            <TextBox x:Name="txtServerAddress" 
+                                     Grid.Column="1"
+                                     FontSize="11"
+                                     Height="26"
+                                     VerticalContentAlignment="Center"
+                                     Padding="6,0"/>
+                        </Grid>
+                        
+                        <!-- Code Context -->
+                        <TextBlock Text="Code Context:" 
+                                   FontSize="11" 
+                                   Margin="0,0,0,4"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                        <TextBox x:Name="txtCodeContext" 
+                                 IsReadOnly="True" 
+                                 TextWrapping="Wrap" 
+                                 VerticalScrollBarVisibility="Auto" 
+                                 Height="60" 
+                                 FontFamily="Consolas" 
+                                 FontSize="10"
+                                 Margin="0,0,0,8"
+                                 Padding="6"/>
+                        <Button Content="Refresh Context" 
+                                Click="RefreshContextClick"
+                                HorizontalAlignment="Left"
+                                Padding="10,6"
+                                FontSize="11"/>
+                    </StackPanel>
+                </Border>
+                
+                <!-- Input TextBox -->
+                <Border Grid.Row="2"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1"
+                        CornerRadius="6"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="*"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <TextBox x:Name="txtUserInput" 
+                                 Grid.Row="0"
+                                 BorderThickness="0"
+                                 AcceptsReturn="True"
+                                 TextWrapping="Wrap"
+                                 MinHeight="60"
+                                 MaxHeight="200"
+                                 VerticalScrollBarVisibility="Auto"
+                                 FontSize="12"
+                                 Padding="12,10"
+                                 Background="Transparent"
+                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        
+                        <!-- Send Button -->
+                        <Button Grid.Row="1"
+                                Content="Send"
+                                Click="SendMessageClick"
+                                HorizontalAlignment="Right"
+                                Margin="8,0,8,8"
+                                Padding="20,6"
+                                FontSize="11"
+                                FontWeight="SemiBold"
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"
+                                Foreground="White"
+                                BorderThickness="0"
+                                ToolTip="Send message (Enter)"/>
+                    </Grid>
+                </Border>
+            </Grid>
+        </Border>
 
         <!-- Status Bar -->
-        <TextBlock x:Name="txtStatusBar" Grid.Row="6" Margin="10,0,10,5" Foreground="DarkRed" FontSize="11"/>
+        <Border Grid.Row="2" 
+                Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                BorderThickness="0,1,0,0"
+                Padding="16,6">
+            <TextBlock x:Name="txtStatusBar" 
+                       Text="Ready"
+                       FontSize="10"
+                       Opacity="0.7"
+                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+        </Border>
     </Grid>
 </UserControl>

@@ -19,10 +19,13 @@ namespace OllamaLocalHostIntergration
         private ObservableCollection<ChatMessage> _chatMessages;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
+        private bool _isInitializing = true;
 
         public MyToolWindowControl()
         {
             InitializeComponent();
+            
+            // Initialize services first
             _ollamaService = new OllamaService();
             _codeEditorService = new CodeEditorService();
             _modeManager = new ModeManager();
@@ -38,36 +41,53 @@ namespace OllamaLocalHostIntergration
             // Subscribe to mode changes
             _modeManager.OnModeChanged += OnModeChanged;
 
+            // Initialize mode
+            _modeManager.SwitchToAskMode();
+
+            _isInitializing = false;
+
             // Load initial code context
             _ = RefreshCodeContextAsync();
-            // Load models
+            // Load models from Ollama server
             _ = RefreshModelsAsync();
         }
 
         private void OnModeChanged(InteractionMode mode)
         {
-            if (mode == InteractionMode.Ask)
+            // Mode description can be shown in status bar if needed
+        }
+
+        private void ComboMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || _modeManager == null)
+                return;
+
+            if (comboMode.SelectedItem is ComboBoxItem selectedItem)
             {
-                txtModeDescription.Text = "(Read-only Q&A)";
-            }
-            else
-            {
-                txtModeDescription.Text = "(Active code editing)";
+                string mode = selectedItem.Tag?.ToString();
+                if (mode == "Ask")
+                {
+                    _modeManager.SwitchToAskMode();
+                    txtStatusBar.Text = "Mode: Ask";
+                }
+                else if (mode == "Agent")
+                {
+                    _modeManager.SwitchToAgentMode();
+                    txtStatusBar.Text = "Mode: Agent";
+                }
             }
         }
 
-        private void ModeChanged(object sender, RoutedEventArgs e)
+        private void SettingsClick(object sender, RoutedEventArgs e)
         {
-            if (_modeManager == null)
-                return; // Or handle initialization differently
-
-            if (radioAskMode.IsChecked == true)
+            // Toggle settings panel visibility
+            if (settingsPanel.Visibility == Visibility.Collapsed)
             {
-                _modeManager.SwitchToAskMode();
+                settingsPanel.Visibility = Visibility.Visible;
             }
-            else if (radioAgentMode.IsChecked == true)
+            else
             {
-                _modeManager.SwitchToAgentMode();
+                settingsPanel.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -116,7 +136,7 @@ namespace OllamaLocalHostIntergration
 
                 // Show loading message
                 _chatMessages.Add(new ChatMessage("Thinking...", false));
-                txtStatusBar.Text = "Waiting for Ollama response...";
+                txtStatusBar.Text = "Waiting for response...";
                 
                 // Get response from Ollama using the chat API with system prompt
                 string response = await _ollamaService.GenerateChatResponseAsync(userMessage, systemPrompt, codeContext);
@@ -124,10 +144,15 @@ namespace OllamaLocalHostIntergration
                 // Remove loading message and add actual response
                 _chatMessages.RemoveAt(_chatMessages.Count - 1);
                 _chatMessages.Add(new ChatMessage(response, false));
-                txtStatusBar.Text = "Response received.";
+                txtStatusBar.Text = "Ready";
             }
             catch (Exception ex)
             {
+                // Remove loading message
+                if (_chatMessages.Count > 0 && _chatMessages[_chatMessages.Count - 1].Content == "Thinking...")
+                {
+                    _chatMessages.RemoveAt(_chatMessages.Count - 1);
+                }
                 _chatMessages.Add(new ChatMessage($"Error: {ex.Message}", false));
                 txtStatusBar.Text = $"Error: {ex.Message}";
             }
@@ -167,14 +192,14 @@ namespace OllamaLocalHostIntergration
             txtCodeContext.Text = _currentCodeContext;
             
             int contextLength = _currentCodeContext.Length;
-            txtStatusBar.Text = $"Code context updated ({contextLength} characters).";
+            txtStatusBar.Text = contextLength > 0 ? $"Code context updated ({contextLength} characters)" : "No code context";
         }
 
         private void ClearChatClick(object sender, RoutedEventArgs e)
         {
             _chatMessages.Clear();
             _ollamaService.ClearConversationHistory();
-            txtStatusBar.Text = "Chat cleared.";
+            txtStatusBar.Text = "Chat cleared";
         }
 
         private async void RefreshModelsClick(object sender, RoutedEventArgs e)
@@ -184,23 +209,42 @@ namespace OllamaLocalHostIntergration
 
         private async Task RefreshModelsAsync()
         {
-            txtStatusBar.Text = "Fetching models...";
-            _availableModels = await _ollamaService.GetAvailableModelsAsync();
-            comboModels.ItemsSource = _availableModels;
-            if (_availableModels.Count > 0)
+            try
             {
-                comboModels.SelectedIndex = 0;
-                _ollamaService.SetModel(_availableModels[0]);
+                txtStatusBar.Text = "Fetching models from Ollama server...";
+                
+                // Get all available models from the Ollama server
+                _availableModels = await _ollamaService.GetAvailableModelsAsync();
+                
+                comboModels.ItemsSource = _availableModels;
+                
+                if (_availableModels.Count > 0)
+                {
+                    comboModels.SelectedIndex = 0;
+                    _ollamaService.SetModel(_availableModels[0]);
+                    txtStatusBar.Text = $"Loaded {_availableModels.Count} model(s) from server";
+                }
+                else
+                {
+                    txtStatusBar.Text = "No models found. Make sure Ollama is running.";
+                }
             }
-            txtStatusBar.Text = _availableModels.Count > 0 ? "Models loaded." : "No models found. Make sure Ollama is running.";
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Failed to fetch models: {ex.Message}";
+                _availableModels.Clear();
+            }
         }
 
         private void ComboModels_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            if (_isInitializing)
+                return;
+
             if (comboModels.SelectedItem is string selectedModel)
             {
                 _ollamaService.SetModel(selectedModel);
-                txtStatusBar.Text = $"Model set to: {selectedModel}";
+                txtStatusBar.Text = $"Using {selectedModel}";
             }
         }
     }
