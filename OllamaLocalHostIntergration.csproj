@@ -83,7 +83,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="DEPLOYMENT_PLAN.md" />
+    <None Include="diagnose-ollama.ps1" />
     <None Include="diagnose.ps1" />
+    <None Include="OLLAMA_TROUBLESHOOTING.md" />
     <None Include="PHASE_1_COMPLETION.md" />
     <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
     <None Include="PHASE_1_SUMMARY.md" />
@@ -91,6 +93,12 @@
     <None Include="PHASE_2_1_SUMMARY.md" />
     <None Include="PHASE_2_COMPLETE.md" />
     <None Include="PHASE_2_PROGRESS.md" />
+    <None Include="PHASE_3_COMPLETE.md" />
+    <None Include="PROJECT_COMPLETE.md" />
+    <None Include="QUICK_START.md" />
+    <None Include="README_UPDATE_SUMMARY.md" />
+    <None Include="REMOTE_OLLAMA_SETUP.md" />
+    <None Include="REMOTE_SETUP_SUMMARY.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
