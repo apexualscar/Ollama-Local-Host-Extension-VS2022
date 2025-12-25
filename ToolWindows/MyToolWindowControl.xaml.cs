@@ -7,6 +7,7 @@ using OllamaLocalHostIntergration.Models;
 using System.Threading.Tasks;
 using EnvDTE;
 using System.Collections.Generic;
+using System.Linq;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 
 namespace OllamaLocalHostIntergration
@@ -16,6 +17,8 @@ namespace OllamaLocalHostIntergration
         private readonly OllamaService _ollamaService;
         private readonly CodeEditorService _codeEditorService;
         private readonly ModeManager _modeManager;
+        private readonly CodeModificationService _codeModService;
+        private readonly MessageParserService _messageParser;
         private ObservableCollection<ChatMessage> _chatMessages;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -29,6 +32,8 @@ namespace OllamaLocalHostIntergration
             _ollamaService = new OllamaService();
             _codeEditorService = new CodeEditorService();
             _modeManager = new ModeManager();
+            _codeModService = new CodeModificationService(_codeEditorService);
+            _messageParser = new MessageParserService();
             _chatMessages = new ObservableCollection<ChatMessage>();
             chatMessagesPanel.ItemsSource = _chatMessages;
 
@@ -120,8 +125,9 @@ namespace OllamaLocalHostIntergration
             if (comboModels.SelectedItem is string selectedModel)
                 _ollamaService.SetModel(selectedModel);
 
-            // Add user message to chat
-            _chatMessages.Add(new ChatMessage(userMessage, true));
+            // Add user message to chat (parse for consistency)
+            var userChatMessage = _messageParser.ParseMessage(userMessage, true);
+            _chatMessages.Add(userChatMessage);
 
             // Clear input
             txtUserInput.Clear();
@@ -133,27 +139,60 @@ namespace OllamaLocalHostIntergration
 
                 // Use the latest code context
                 string codeContext = _currentCodeContext;
+                string language = await _codeEditorService.GetActiveDocumentLanguageAsync();
 
                 // Show loading message
-                _chatMessages.Add(new ChatMessage("Thinking...", false));
+                var loadingMessage = new ChatMessage("Thinking...", false);
+                _chatMessages.Add(loadingMessage);
                 txtStatusBar.Text = "Waiting for response...";
                 
                 // Get response from Ollama using the chat API with system prompt
                 string response = await _ollamaService.GenerateChatResponseAsync(userMessage, systemPrompt, codeContext);
                 
-                // Remove loading message and add actual response
-                _chatMessages.RemoveAt(_chatMessages.Count - 1);
-                _chatMessages.Add(new ChatMessage(response, false));
-                txtStatusBar.Text = "Ready";
+                // Remove loading message
+                _chatMessages.Remove(loadingMessage);
+                
+                // Parse response and create rich chat message
+                var responseChatMessage = _messageParser.ParseMessage(response, false);
+                
+                // For Agent mode, check if we can create a CodeEdit
+                if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)
+                {
+                    try
+                    {
+                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(response, codeContext);
+                        if (codeEdit != null)
+                        {
+                            responseChatMessage.AssociatedCodeEdit = codeEdit;
+                            responseChatMessage.IsApplicable = true;
+                            _modeManager.AddPendingEdit(codeEdit);
+                        }
+                    }
+                    catch
+                    {
+                        // Failed to create CodeEdit, but still show the message
+                    }
+                }
+                
+                _chatMessages.Add(responseChatMessage);
+                txtStatusBar.Text = responseChatMessage.HasCodeBlocks 
+                    ? $"Ready ({responseChatMessage.CodeBlocks.Count} code block(s))" 
+                    : "Ready";
             }
             catch (Exception ex)
             {
-                // Remove loading message
-                if (_chatMessages.Count > 0 && _chatMessages[_chatMessages.Count - 1].Content == "Thinking...")
+                // Remove loading message if it exists
+                for (int i = _chatMessages.Count - 1; i >= 0; i--)
                 {
-                    _chatMessages.RemoveAt(_chatMessages.Count - 1);
+                    if (_chatMessages[i].Content == "Thinking...")
+                    {
+                        _chatMessages.RemoveAt(i);
+                        break;
+                    }
                 }
-                _chatMessages.Add(new ChatMessage($"Error: {ex.Message}", false));
+                
+                var errorMessage = new ChatMessage($"Error: {ex.Message}", false);
+                _chatMessages.Add(errorMessage);
                 txtStatusBar.Text = $"Error: {ex.Message}";
             }
 

@@ -45,9 +45,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Controls\RichChatMessageControl.xaml.cs">
+      <DependentUpon>RichChatMessageControl.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Converters\BoolToIconConverter.cs" />
     <Compile Include="Converters\BoolToRoleConverter.cs" />
     <Compile Include="Converters\BoolToUserColorConverter.cs" />
+    <Compile Include="Converters\BoolToVisibilityConverter.cs" />
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
     <Compile Include="Models\InteractionMode.cs" />
@@ -56,6 +60,7 @@
     <Compile Include="OllamaLocalHostIntergrationPackage.cs" />
     <Compile Include="Services\CodeEditorService.cs" />
     <Compile Include="Services\CodeModificationService.cs" />
+    <Compile Include="Services\MessageParserService.cs" />
     <Compile Include="Services\ModeManager.cs" />
     <Compile Include="Services\OllamaService.cs" />
     <Compile Include="Services\PromptBuilder.cs" />
@@ -104,6 +109,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="ToolWindows\MyToolWindow.cs" />
+    <Page Include="Controls\RichChatMessageControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="ToolWindows\MyToolWindowControl.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
