@@ -18,12 +18,94 @@
           <LocCanonicalName>.View.OllamaCopilot</LocCanonicalName>
         </Strings>
       </Button>
+
+      <!-- Explain Code Command -->
+      <Button guid="OllamaLocalHostIntergration" id="ExplainCodeCommand" priority="0x0100" type="Button">
+        <Parent guid="OllamaLocalHostIntergration" id="OllamaContextMenuGroup"/>
+        <Icon guid="ImageCatalogGuid" id="QuestionMark" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Explain Code</ButtonText>
+          <LocCanonicalName>.OllamaCopilot.ExplainCode</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <!-- Refactor Code Command -->
+      <Button guid="OllamaLocalHostIntergration" id="RefactorCodeCommand" priority="0x0200" type="Button">
+        <Parent guid="OllamaLocalHostIntergration" id="OllamaContextMenuGroup"/>
+        <Icon guid="ImageCatalogGuid" id="Refactoring" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Refactor with Ollama</ButtonText>
+          <LocCanonicalName>.OllamaCopilot.RefactorCode</LocCanonicalName>
+        </Strings>
+      </Button>
+
+      <!-- Find Issues Command -->
+      <Button guid="OllamaLocalHostIntergration" id="FindIssuesCommand" priority="0x0300" type="Button">
+        <Parent guid="OllamaLocalHostIntergration" id="OllamaContextMenuGroup"/>
+        <Icon guid="ImageCatalogGuid" id="FindSymbol" />
+        <CommandFlag>IconIsMoniker</CommandFlag>
+        <CommandFlag>DefaultInvisible</CommandFlag>
+        <CommandFlag>DynamicVisibility</CommandFlag>
+        <Strings>
+          <ButtonText>Find Issues</ButtonText>
+          <LocCanonicalName>.OllamaCopilot.FindIssues</LocCanonicalName>
+        </Strings>
+      </Button>
     </Buttons>
+
+    <Menus>
+      <!-- Context menu for code editor -->
+      <Menu guid="OllamaLocalHostIntergration" id="OllamaContextMenu" priority="0x0100" type="Context">
+        <Strings>
+          <ButtonText>Ollama Copilot</ButtonText>
+        </Strings>
+      </Menu>
+    </Menus>
+
+    <Groups>
+      <!-- Group for context menu items -->
+      <Group guid="OllamaLocalHostIntergration" id="OllamaContextMenuGroup" priority="0x0100">
+        <Parent guid="guidSHLMainMenu" id="IDM_VS_CTXT_CODEWIN"/>
+      </Group>
+    </Groups>
   </Commands>
+
+  <KeyBindings>
+    <!-- Ctrl+Shift+O: Open Ollama Copilot window -->
+    <KeyBinding guid="OllamaLocalHostIntergration" id="MyCommand" 
+                editor="guidVSStd97" 
+                key1="O" mod1="Control Shift"/>
+    
+    <!-- Ctrl+Shift+E: Explain selected code -->
+    <KeyBinding guid="OllamaLocalHostIntergration" id="ExplainCodeCommand" 
+                editor="guidVSStd97" 
+                key1="E" mod1="Control Shift"/>
+    
+    <!-- Ctrl+Shift+R: Refactor with Ollama -->
+    <KeyBinding guid="OllamaLocalHostIntergration" id="RefactorCodeCommand" 
+                editor="guidVSStd97" 
+                key1="R" mod1="Control Shift"/>
+    
+    <!-- Ctrl+Shift+I: Find Issues -->
+    <KeyBinding guid="OllamaLocalHostIntergration" id="FindIssuesCommand" 
+                editor="guidVSStd97" 
+                key1="I" mod1="Control Shift"/>
+  </KeyBindings>
 
   <Symbols>
     <GuidSymbol name="OllamaLocalHostIntergration" value="{d1873e5c-8c8c-468f-a7b9-80a76f15e915}">
       <IDSymbol name="MyCommand" value="0x0100" />
+      <IDSymbol name="OllamaContextMenu" value="0x1000" />
+      <IDSymbol name="OllamaContextMenuGroup" value="0x1100" />
+      <IDSymbol name="ExplainCodeCommand" value="0x0200" />
+      <IDSymbol name="RefactorCodeCommand" value="0x0300" />
+      <IDSymbol name="FindIssuesCommand" value="0x0400" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>

@@ -45,6 +45,9 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="Commands\ExplainCodeCommand.cs" />
+    <Compile Include="Commands\FindIssuesCommand.cs" />
+    <Compile Include="Commands\RefactorCodeCommand.cs" />
     <Compile Include="Controls\RichChatMessageControl.xaml.cs">
       <DependentUpon>RichChatMessageControl.xaml</DependentUpon>
     </Compile>
@@ -86,6 +89,7 @@
     <None Include="PHASE_1_SUMMARY.md" />
     <None Include="PHASE_1_VERIFICATION.md" />
     <None Include="PHASE_2_1_SUMMARY.md" />
+    <None Include="PHASE_2_COMPLETE.md" />
     <None Include="PHASE_2_PROGRESS.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>

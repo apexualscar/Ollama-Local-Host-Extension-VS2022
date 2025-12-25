@@ -318,5 +318,135 @@ namespace OllamaLocalHostIntergration
                 txtStatusBar.Text = $"Using {selectedModel}";
             }
         }
+
+        /// <summary>
+        /// Explains selected code (called from context menu command)
+        /// </summary>
+        public async Task ExplainCodeAsync(string code, string language)
+        {
+            try
+            {
+                // Switch to Ask mode
+                _modeManager.SwitchToAskMode();
+                comboMode.SelectedIndex = 0;
+
+                // Add user message
+                var userMessage = $"Please explain this {language} code";
+                var userChatMessage = _messageParser.ParseMessage(userMessage, true);
+                _chatMessages.Add(userChatMessage);
+
+                // Show loading
+                var loadingMessage = new ChatMessage("Analyzing code...", false);
+                _chatMessages.Add(loadingMessage);
+                txtStatusBar.Text = "Analyzing code...";
+
+                // Get explanation
+                string response = await _ollamaService.ExplainCodeAsync(code, language);
+
+                // Remove loading and add response
+                _chatMessages.Remove(loadingMessage);
+                var responseChatMessage = _messageParser.ParseMessage(response, false);
+                _chatMessages.Add(responseChatMessage);
+                
+                txtStatusBar.Text = "Explanation complete";
+                chatMessagesScroll.ScrollToBottom();
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Refactors selected code (called from context menu command)
+        /// </summary>
+        public async Task RefactorCodeAsync(string code, string language)
+        {
+            try
+            {
+                // Switch to Agent mode
+                _modeManager.SwitchToAgentMode();
+                comboMode.SelectedIndex = 1;
+
+                // Add user message
+                var userMessage = $"Please refactor this {language} code to improve readability and performance";
+                var userChatMessage = _messageParser.ParseMessage(userMessage, true);
+                _chatMessages.Add(userChatMessage);
+
+                // Show loading
+                var loadingMessage = new ChatMessage("Refactoring code...", false);
+                _chatMessages.Add(loadingMessage);
+                txtStatusBar.Text = "Refactoring code...";
+
+                // Get refactoring suggestions
+                string response = await _ollamaService.SuggestRefactoringAsync(code, language);
+
+                // Remove loading and add response
+                _chatMessages.Remove(loadingMessage);
+                var responseChatMessage = _messageParser.ParseMessage(response, false);
+                
+                // Check if we can create a CodeEdit
+                if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)
+                {
+                    try
+                    {
+                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(response, code);
+                        if (codeEdit != null)
+                        {
+                            responseChatMessage.AssociatedCodeEdit = codeEdit;
+                            responseChatMessage.IsApplicable = true;
+                            _modeManager.AddPendingEdit(codeEdit);
+                        }
+                    }
+                    catch { }
+                }
+                
+                _chatMessages.Add(responseChatMessage);
+                txtStatusBar.Text = "Refactoring complete";
+                chatMessagesScroll.ScrollToBottom();
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Finds issues in selected code (called from context menu command)
+        /// </summary>
+        public async Task FindIssuesAsync(string code, string language)
+        {
+            try
+            {
+                // Switch to Ask mode
+                _modeManager.SwitchToAskMode();
+                comboMode.SelectedIndex = 0;
+
+                // Add user message
+                var userMessage = $"Please find potential issues, bugs, or improvements in this {language} code";
+                var userChatMessage = _messageParser.ParseMessage(userMessage, true);
+                _chatMessages.Add(userChatMessage);
+
+                // Show loading
+                var loadingMessage = new ChatMessage("Analyzing for issues...", false);
+                _chatMessages.Add(loadingMessage);
+                txtStatusBar.Text = "Analyzing for issues...";
+
+                // Find issues
+                string response = await _ollamaService.FindCodeIssuesAsync(code, language);
+
+                // Remove loading and add response
+                _chatMessages.Remove(loadingMessage);
+                var responseChatMessage = _messageParser.ParseMessage(response, false);
+                _chatMessages.Add(responseChatMessage);
+                
+                txtStatusBar.Text = "Analysis complete";
+                chatMessagesScroll.ScrollToBottom();
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+        }
     }
 }

@@ -21,5 +21,10 @@ namespace OllamaLocalHostIntergration
     internal sealed partial class PackageIds
     {
         public const int MyCommand = 0x0100;
+        public const int OllamaContextMenu = 0x1000;
+        public const int OllamaContextMenuGroup = 0x1100;
+        public const int ExplainCodeCommand = 0x0200;
+        public const int RefactorCodeCommand = 0x0300;
+        public const int FindIssuesCommand = 0x0400;
     }
 }
