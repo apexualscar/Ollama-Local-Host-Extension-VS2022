@@ -7,13 +7,15 @@ using OllamaLocalHostIntergration.Models;
 using System.Threading.Tasks;
 using EnvDTE;
 using System.Collections.Generic;
-using SelectionChangedEventArgs = Community.VisualStudio.Toolkit.SelectionChangedEventArgs;
+using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 
 namespace OllamaLocalHostIntergration
 {
     public partial class MyToolWindowControl : UserControl
     {
         private readonly OllamaService _ollamaService;
+        private readonly CodeEditorService _codeEditorService;
+        private readonly ModeManager _modeManager;
         private ObservableCollection<ChatMessage> _chatMessages;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -22,6 +24,8 @@ namespace OllamaLocalHostIntergration
         {
             InitializeComponent();
             _ollamaService = new OllamaService();
+            _codeEditorService = new CodeEditorService();
+            _modeManager = new ModeManager();
             _chatMessages = new ObservableCollection<ChatMessage>();
             chatMessagesPanel.ItemsSource = _chatMessages;
 
@@ -31,10 +35,37 @@ namespace OllamaLocalHostIntergration
             // Handle Enter key in the input box
             txtUserInput.KeyDown += TxtUserInputKeyDown;
 
+            // Subscribe to mode changes
+            _modeManager.OnModeChanged += OnModeChanged;
+
             // Load initial code context
             _ = RefreshCodeContextAsync();
             // Load models
             _ = RefreshModelsAsync();
+        }
+
+        private void OnModeChanged(InteractionMode mode)
+        {
+            if (mode == InteractionMode.Ask)
+            {
+                txtModeDescription.Text = "(Read-only Q&A)";
+            }
+            else
+            {
+                txtModeDescription.Text = "(Active code editing)";
+            }
+        }
+
+        private void ModeChanged(object sender, RoutedEventArgs e)
+        {
+            if (radioAskMode.IsChecked == true)
+            {
+                _modeManager.SwitchToAskMode();
+            }
+            else if (radioAgentMode.IsChecked == true)
+            {
+                _modeManager.SwitchToAgentMode();
+            }
         }
 
         private async void SendMessageClick(object sender, RoutedEventArgs e)
@@ -74,6 +105,9 @@ namespace OllamaLocalHostIntergration
 
             try
             {
+                // Get system prompt based on current mode
+                string systemPrompt = _modeManager.GetSystemPrompt();
+
                 // Use the latest code context
                 string codeContext = _currentCodeContext;
 
@@ -81,8 +115,8 @@ namespace OllamaLocalHostIntergration
                 _chatMessages.Add(new ChatMessage("Thinking...", false));
                 txtStatusBar.Text = "Waiting for Ollama response...";
                 
-                // Get response from Ollama
-                string response = await _ollamaService.GenerateResponse(userMessage, codeContext);
+                // Get response from Ollama using the chat API with system prompt
+                string response = await _ollamaService.GenerateChatResponseAsync(userMessage, systemPrompt, codeContext);
                 
                 // Remove loading message and add actual response
                 _chatMessages.RemoveAt(_chatMessages.Count - 1);
@@ -104,21 +138,7 @@ namespace OllamaLocalHostIntergration
 
         private async Task<string> GetActiveDocumentTextAsync()
         {
-            try
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                var dte = Package.GetGlobalService(typeof(DTE)) as DTE;
-                if (dte?.ActiveDocument?.Object("TextDocument") is TextDocument textDoc)
-                {
-                    EditPoint editPoint = textDoc.StartPoint.CreateEditPoint();
-                    return editPoint.GetText(textDoc.EndPoint);
-                }
-            }
-            catch (Exception)
-            {
-                // Silently fail if we can't get the document text
-            }
-            return null;
+            return await _codeEditorService.GetActiveDocumentTextAsync();
         }
 
         private async void RefreshContextClick(object sender, RoutedEventArgs e)
@@ -129,14 +149,28 @@ namespace OllamaLocalHostIntergration
         private async Task RefreshCodeContextAsync()
         {
             txtStatusBar.Text = "Refreshing code context...";
+            
+            // Get active document text
             _currentCodeContext = await GetActiveDocumentTextAsync() ?? string.Empty;
+            
+            // Also get selection if available
+            var selectedText = await _codeEditorService.GetSelectedTextAsync();
+            if (!string.IsNullOrEmpty(selectedText))
+            {
+                var language = await _codeEditorService.GetActiveDocumentLanguageAsync();
+                _currentCodeContext = $"Selected {language} code:\n{selectedText}";
+            }
+            
             txtCodeContext.Text = _currentCodeContext;
-            txtStatusBar.Text = "Code context updated.";
+            
+            int contextLength = _currentCodeContext.Length;
+            txtStatusBar.Text = $"Code context updated ({contextLength} characters).";
         }
 
         private void ClearChatClick(object sender, RoutedEventArgs e)
         {
             _chatMessages.Clear();
+            _ollamaService.ClearConversationHistory();
             txtStatusBar.Text = "Chat cleared.";
         }
 
@@ -155,10 +189,10 @@ namespace OllamaLocalHostIntergration
                 comboModels.SelectedIndex = 0;
                 _ollamaService.SetModel(_availableModels[0]);
             }
-            txtStatusBar.Text = _availableModels.Count > 0 ? "Models loaded." : "No models found.";
+            txtStatusBar.Text = _availableModels.Count > 0 ? "Models loaded." : "No models found. Make sure Ollama is running.";
         }
 
-        private void ComboModelsSelectionChanged(object sender, SelectionChangedEventArgs e)
+        private void ComboModels_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
             if (comboModels.SelectedItem is string selectedModel)
             {
