@@ -186,6 +186,55 @@ namespace OllamaLocalHostIntergration.Services
             string prompt = $"Please analyze the following code{languageInfo} and identify any potential issues, bugs, or improvements:\n\n```\n{code}\n```";
             return await GenerateChatResponseAsync(prompt);
         }
+
+        /// <summary>
+        /// Specialized method for Agent mode code editing
+        /// Requests the AI to provide a complete modified version of code
+        /// </summary>
+        public async Task<string> GenerateCodeEditAsync(string originalCode, string modificationRequest, string language = "", string additionalContext = "")
+        {
+            string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
+            string contextInfo = string.IsNullOrEmpty(additionalContext) ? "" : $"\n\nAdditional context:\n{additionalContext}";
+            
+            string prompt = $@"Please modify the following code{languageInfo} according to this request:
+
+Request: {modificationRequest}
+
+Original code:
+```
+{originalCode}
+```{contextInfo}
+
+Provide the complete modified code in a code block. Explain the changes you made and why.";
+            
+            return await GenerateChatResponseAsync(prompt);
+        }
+
+        /// <summary>
+        /// Generate documentation for code
+        /// </summary>
+        public async Task<string> GenerateDocumentationAsync(string code, string language = "")
+        {
+            string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
+            string prompt = $"Please generate comprehensive documentation for the following code{languageInfo}:\n\n```\n{code}\n```\n\nInclude: purpose, parameters, return values, and usage examples.";
+            return await GenerateChatResponseAsync(prompt);
+        }
+
+        /// <summary>
+        /// Get conversation history count
+        /// </summary>
+        public int GetConversationMessageCount()
+        {
+            return _conversationHistory.Count;
+        }
+
+        /// <summary>
+        /// Get conversation history
+        /// </summary>
+        public IReadOnlyList<OllamaChatMessage> GetConversationHistory()
+        {
+            return _conversationHistory.AsReadOnly();
+        }
     }
 
     public class OllamaResponse

@@ -55,8 +55,10 @@
     <Compile Include="Commands\MyToolWindowCommand.cs" />
     <Compile Include="OllamaLocalHostIntergrationPackage.cs" />
     <Compile Include="Services\CodeEditorService.cs" />
+    <Compile Include="Services\CodeModificationService.cs" />
     <Compile Include="Services\ModeManager.cs" />
     <Compile Include="Services\OllamaService.cs" />
+    <Compile Include="Services\PromptBuilder.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
@@ -71,6 +73,10 @@
   <ItemGroup>
     <None Include="DEPLOYMENT_PLAN.md" />
     <None Include="diagnose.ps1" />
+    <None Include="PHASE_1_COMPLETION.md" />
+    <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
+    <None Include="PHASE_1_SUMMARY.md" />
+    <None Include="PHASE_1_VERIFICATION.md" />
     <None Include="source.extension.vsixmanifest">
       <SubType>Designer</SubType>
       <Generator>VsixManifestGenerator</Generator>
