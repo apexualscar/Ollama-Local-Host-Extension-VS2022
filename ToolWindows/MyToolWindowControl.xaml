@@ -7,6 +7,7 @@
              xmlns:theming="clr-namespace:Microsoft.VisualStudio.PlatformUI;assembly=Microsoft.VisualStudio.Imaging"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
              xmlns:local="clr-namespace:OllamaLocalHostIntergration"
+             xmlns:controls="clr-namespace:OllamaLocalHostIntergration.Controls"
              xmlns:converters="clr-namespace:OllamaLocalHostIntergration.Converters"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              toolkit:Themes.UseVsTheme="True"
@@ -19,6 +20,7 @@
         <local:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
         <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
         <converters:BoolToUserColorConverter x:Key="BoolToUserColorConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
     </UserControl.Resources>
     
     <Grid>
@@ -37,47 +39,7 @@
             <ItemsControl x:Name="chatMessagesPanel">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <Border Margin="0,0,0,20" 
-                                Padding="0">
-                            <Grid>
-                                <Grid.RowDefinitions>
-                                    <RowDefinition Height="Auto"/>
-                                    <RowDefinition Height="*"/>
-                                </Grid.RowDefinitions>
-                                
-                                <!-- Header with icon -->
-                                <StackPanel Grid.Row="0" 
-                                           Orientation="Horizontal"
-                                           Margin="0,0,0,8">
-                                    <Border Width="24" 
-                                            Height="24" 
-                                            CornerRadius="12"
-                                            Background="{Binding IsUser, Converter={StaticResource BoolToUserColorConverter}}"
-                                            Margin="0,0,10,0">
-                                        <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToIconConverter}}"
-                                                   FontFamily="Segoe MDL2 Assets"
-                                                   Foreground="White"
-                                                   FontSize="12"
-                                                   HorizontalAlignment="Center"
-                                                   VerticalAlignment="Center"/>
-                                    </Border>
-                                    <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
-                                               FontWeight="SemiBold"
-                                               FontSize="13"
-                                               VerticalAlignment="Center"
-                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                                </StackPanel>
-                                
-                                <!-- Message Content -->
-                                <TextBlock Grid.Row="1" 
-                                         Text="{Binding Content}"
-                                         TextWrapping="Wrap"
-                                         FontSize="12"
-                                         LineHeight="22"
-                                         Margin="34,0,0,0"
-                                         Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                            </Grid>
-                        </Border>
+                        <controls:RichChatMessageControl DataContext="{Binding}"/>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>

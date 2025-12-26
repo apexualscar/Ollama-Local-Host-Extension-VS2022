@@ -51,6 +51,7 @@
     <Compile Include="Controls\RichChatMessageControl.xaml.cs">
       <DependentUpon>RichChatMessageControl.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Converters\BoolToAlignmentConverter.cs" />
     <Compile Include="Converters\BoolToIconConverter.cs" />
     <Compile Include="Converters\BoolToRoleConverter.cs" />
     <Compile Include="Converters\BoolToUserColorConverter.cs" />
@@ -94,13 +95,24 @@
     <None Include="DEBUG_FETCH_MODELS.md" />
     <None Include="DEPLOYMENT_PLAN.md" />
     <None Include="diagnose-ollama.ps1" />
+    <None Include="diagnose-phase5-1.ps1" />
     <None Include="diagnose.ps1" />
+    <None Include="docs\BUGFIX_MODEL_NAME_AND_CODEBLOCKS.md" />
     <None Include="docs\INDEX.md" />
     <None Include="docs\ORGANIZATION_COMPLETE.md" />
     <None Include="docs\PHASE_4_2_COMPLETE.md" />
     <None Include="docs\PHASE_4_2_SUMMARY.md" />
     <None Include="docs\PHASE_4_2_TESTING.md" />
     <None Include="docs\PHASE_4_3_COMPLETE.md" />
+    <None Include="docs\PHASE_4_4_COMPLETE.md" />
+    <None Include="docs\PHASE_4_COMPLETE.md" />
+    <None Include="docs\PHASE_5_1_COMPLETE.md" />
+    <None Include="docs\PHASE_5_1_QUICK_FIX.md" />
+    <None Include="docs\PHASE_5_2_COMPLETE.md" />
+    <None Include="docs\PHASE_5_2_QUICK.md" />
+    <None Include="docs\PHASE_5_FIX_PLAN.md" />
+    <None Include="docs\START_HERE_FIXES.md" />
+    <None Include="docs\UI_CHAT_ALIGNMENT_UPDATE.md" />
     <None Include="EXTENSION_NOT_DETECTING.md" />
     <None Include="fix-xaml-link.ps1" />
     <None Include="FIX_BUILD_NOW.md" />

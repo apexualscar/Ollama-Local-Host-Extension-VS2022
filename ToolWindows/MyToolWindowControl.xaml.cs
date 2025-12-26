@@ -262,8 +262,12 @@ namespace OllamaLocalHostIntergration
                 // Remove streaming placeholder
                 _chatMessages.Remove(streamingMessage);
                 
+                // Get current model name for display
+                string currentModel = comboModels.SelectedItem as string ?? "Ollama";
+                
                 // Parse complete response for code blocks and create rich message
                 var responseChatMessage = _messageParser.ParseMessage(fullResponse, false);
+                responseChatMessage.ModelName = currentModel;
                 
                 // For Agent mode, check if we can create a CodeEdit
                 if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)
@@ -568,6 +572,7 @@ namespace OllamaLocalHostIntergration
                 // Remove loading and add response
                 _chatMessages.Remove(loadingMessage);
                 var responseChatMessage = _messageParser.ParseMessage(response, false);
+                responseChatMessage.ModelName = comboModels.SelectedItem as string ?? "Ollama";
                 _chatMessages.Add(responseChatMessage);
                 _currentConversation.Messages.Add(responseChatMessage);
                 
@@ -611,6 +616,7 @@ namespace OllamaLocalHostIntergration
                 // Remove loading and add response
                 _chatMessages.Remove(loadingMessage);
                 var responseChatMessage = _messageParser.ParseMessage(response, false);
+                responseChatMessage.ModelName = comboModels.SelectedItem as string ?? "Ollama";
                 
                 // Check if we can create a CodeEdit
                 if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)
@@ -671,6 +677,7 @@ namespace OllamaLocalHostIntergration
                 // Remove loading and add response
                 _chatMessages.Remove(loadingMessage);
                 var responseChatMessage = _messageParser.ParseMessage(response, false);
+                responseChatMessage.ModelName = comboModels.SelectedItem as string ?? "Ollama";
                 _chatMessages.Add(responseChatMessage);
                 _currentConversation.Messages.Add(responseChatMessage);
                 
@@ -876,8 +883,12 @@ namespace OllamaLocalHostIntergration
                     // Remove streaming placeholder
                     _chatMessages.Remove(streamingMessage);
 
+                    // Get current model name
+                    string currentModel = comboModels.SelectedItem as string ?? "Ollama";
+                    
                     // Parse response
                     var responseChatMessage = _messageParser.ParseMessage(fullResponse, false);
+                    responseChatMessage.ModelName = currentModel;
 
                     // For Agent mode, check if we can create a CodeEdit
                     if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)

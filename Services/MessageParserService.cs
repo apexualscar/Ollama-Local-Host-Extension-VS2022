@@ -60,7 +60,7 @@ namespace OllamaLocalHostIntergration.Services
         }
         
         /// <summary>
-        /// Converts a message content to display-friendly format with code block placeholders
+        /// Prepares content for display by removing code blocks (they'll be rendered separately)
         /// </summary>
         public string PrepareDisplayContent(ChatMessage message)
         {
@@ -69,21 +69,13 @@ namespace OllamaLocalHostIntergration.Services
             
             string content = message.Content;
             
-            // Replace code blocks with placeholders for UI rendering
+            // Remove code blocks from the text content (they'll be displayed separately in code blocks panel)
             var pattern = @"```(\w+)?\s*\n(.*?)\n```";
-            var matches = Regex.Matches(content, pattern, RegexOptions.Singleline);
+            content = Regex.Replace(content, pattern, "", RegexOptions.Singleline);
             
-            int offset = 0;
-            for (int i = 0; i < matches.Count; i++)
-            {
-                var match = matches[i];
-                string placeholder = $"[CODE_BLOCK_{i}]";
-                
-                content = content.Remove(match.Index + offset, match.Length);
-                content = content.Insert(match.Index + offset, placeholder);
-                
-                offset += placeholder.Length - match.Length;
-            }
+            // Clean up any extra whitespace
+            content = Regex.Replace(content, @"\n{3,}", "\n\n", RegexOptions.Multiline);
+            content = content.Trim();
             
             return content;
         }

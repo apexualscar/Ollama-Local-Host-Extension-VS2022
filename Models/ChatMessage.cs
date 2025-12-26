@@ -10,6 +10,11 @@ namespace OllamaLocalHostIntergration.Models
         public DateTime Timestamp { get; set; }
         
         /// <summary>
+        /// Model name for AI responses (e.g., "qwen2.5-coder:3b")
+        /// </summary>
+        public string ModelName { get; set; }
+        
+        /// <summary>
         /// Indicates if this message contains code blocks
         /// </summary>
         public bool HasCodeBlocks { get; set; }
@@ -29,14 +34,40 @@ namespace OllamaLocalHostIntergration.Models
         /// </summary>
         public CodeEdit AssociatedCodeEdit { get; set; }
 
-        public ChatMessage(string content, bool isUser)
+        public ChatMessage(string content, bool isUser, string modelName = null)
         {
             Content = content;
             IsUser = isUser;
+            ModelName = modelName;
             Timestamp = DateTime.Now;
             HasCodeBlocks = false;
             CodeBlocks = new List<CodeBlock>();
             IsApplicable = false;
+        }
+        
+        /// <summary>
+        /// Gets a shortened version of the model name for display
+        /// Examples: "qwen2.5-coder:3b" ? "Qwen2.5-coder"
+        ///           "codellama:latest" ? "Codellama"
+        /// </summary>
+        public string ShortModelName
+        {
+            get
+            {
+                if (string.IsNullOrEmpty(ModelName))
+                    return "Ollama";
+                    
+                // Remove version/size suffix (e.g., ":3b", ":latest", ":7b")
+                string name = ModelName.Split(':')[0];
+                
+                // Capitalize first letter
+                if (!string.IsNullOrEmpty(name))
+                {
+                    name = char.ToUpper(name[0]) + name.Substring(1);
+                }
+                
+                return name;
+            }
         }
     }
     

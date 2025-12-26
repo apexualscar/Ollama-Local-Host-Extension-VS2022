@@ -2,132 +2,171 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
-             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:local="clr-namespace:OllamaLocalHostIntergration"
+             xmlns:converters="clr-namespace:OllamaLocalHostIntergration.Converters"
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              mc:Ignorable="d" 
              d:DesignHeight="450" d:DesignWidth="800">
-    <Border Margin="0,0,0,20" Padding="0">
+    <UserControl.Resources>
+        <local:BoolToRoleConverter x:Key="BoolToRoleConverter"/>
+        <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
+        <converters:BoolToUserColorConverter x:Key="BoolToUserColorConverter"/>
+        <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        <converters:BoolToAlignmentConverter x:Key="BoolToAlignmentConverter"/>
+    </UserControl.Resources>
+    
+    <Border Margin="0,0,0,12" 
+            Padding="0"
+            HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignmentConverter}}"
+            MaxWidth="600">
         <Grid>
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
             </Grid.RowDefinitions>
             
-            <!-- Header with icon and timestamp -->
-            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,8">
-                <Border Width="24" Height="24" CornerRadius="12"
+            <!-- Header with icon and name -->
+            <StackPanel Grid.Row="0" 
+                       Orientation="Horizontal"
+                       Margin="0,0,0,6"
+                       HorizontalAlignment="{Binding IsUser, Converter={StaticResource BoolToAlignmentConverter}}">
+                <Border Width="20" 
+                        Height="20" 
+                        CornerRadius="10"
                         Background="{Binding IsUser, Converter={StaticResource BoolToUserColorConverter}}"
-                        Margin="0,0,10,0">
+                        Margin="0,0,8,0">
                     <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToIconConverter}}"
                                FontFamily="Segoe MDL2 Assets"
                                Foreground="White"
-                               FontSize="12"
+                               FontSize="10"
                                HorizontalAlignment="Center"
                                VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToRoleConverter}}"
-                           FontWeight="SemiBold"
-                           FontSize="13"
+                <TextBlock FontWeight="SemiBold"
+                           FontSize="12"
                            VerticalAlignment="Center"
-                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}">
+                    <TextBlock.Style>
+                        <Style TargetType="TextBlock">
+                            <Style.Triggers>
+                                <!-- Show "You" for user messages -->
+                                <DataTrigger Binding="{Binding IsUser}" Value="True">
+                                    <Setter Property="Text" Value="You"/>
+                                </DataTrigger>
+                                <!-- Show shortened model name for AI messages -->
+                                <DataTrigger Binding="{Binding IsUser}" Value="False">
+                                    <Setter Property="Text" Value="{Binding ShortModelName}"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBlock.Style>
+                </TextBlock>
                 <TextBlock Text="{Binding Timestamp, StringFormat={}{0:HH:mm}}"
-                           FontSize="10"
+                           FontSize="9"
                            Opacity="0.5"
-                           Margin="10,0,0,0"
+                           Margin="6,0,0,0"
                            VerticalAlignment="Center"
                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
             </StackPanel>
             
-            <!-- Message Content Area -->
-            <StackPanel Grid.Row="1" Margin="34,0,0,0">
-                <!-- Text content -->
-                <TextBlock x:Name="txtContent"
-                           TextWrapping="Wrap"
-                           FontSize="12"
-                           LineHeight="22"
-                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                
-                <!-- Code blocks container -->
-                <ItemsControl x:Name="codeBlocksPanel" Margin="0,8,0,0">
-                    <ItemsControl.ItemTemplate>
-                        <DataTemplate>
-                            <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                                    BorderThickness="1"
-                                    CornerRadius="4"
-                                    Margin="0,0,0,8"
-                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
-                                <Grid>
-                                    <Grid.RowDefinitions>
-                                        <RowDefinition Height="Auto"/>
-                                        <RowDefinition Height="*"/>
-                                        <RowDefinition Height="Auto"/>
-                                    </Grid.RowDefinitions>
-                                    
-                                    <!-- Code block header with language -->
-                                    <Border Grid.Row="0" 
-                                            Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarGradientKey}}"
-                                            Padding="8,4">
-                                        <TextBlock Text="{Binding Language}"
-                                                   FontSize="10"
-                                                   FontWeight="SemiBold"
-                                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                                    </Border>
-                                    
-                                    <!-- Code content -->
-                                    <TextBox Grid.Row="1"
-                                             Text="{Binding Code, Mode=OneWay}"
-                                             IsReadOnly="True"
-                                             FontFamily="Consolas"
-                                             FontSize="11"
-                                             Padding="8"
-                                             BorderThickness="0"
-                                             Background="Transparent"
-                                             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                             TextWrapping="NoWrap"
-                                             HorizontalScrollBarVisibility="Auto"
-                                             VerticalScrollBarVisibility="Auto"/>
-                                    
-                                    <!-- Action buttons -->
-                                    <StackPanel Grid.Row="2" 
-                                                Orientation="Horizontal" 
-                                                HorizontalAlignment="Right"
-                                                Margin="8,4">
-                                        <Button Padding="8,4"
-                                                FontSize="10"
-                                                Margin="0,0,4,0"
-                                                ToolTip="Copy code to clipboard"
-                                                Tag="{Binding Code}"
-                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
-                                                Click="CopyCode_Click">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Copy"/>
-                                            </StackPanel>
-                                        </Button>
-                                        <Button x:Name="btnApplyCode"
-                                                Padding="8,4"
-                                                FontSize="10"
-                                                ToolTip="Apply this code to the active editor"
-                                                Tag="{Binding Code}"
-                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
-                                                Click="ApplyCode_Click"
-                                                Visibility="{Binding Path=DataContext.IsApplicable, 
-                                                            RelativeSource={RelativeSource AncestorType=UserControl}, 
-                                                            Converter={StaticResource BoolToVisibilityConverter}}">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
-                                                <TextBlock Text="Apply to Editor"/>
-                                            </StackPanel>
-                                        </Button>
-                                    </StackPanel>
-                                </Grid>
-                            </Border>
-                        </DataTemplate>
-                    </ItemsControl.ItemTemplate>
-                </ItemsControl>
-            </StackPanel>
+            <!-- Message Content Area with background -->
+            <Border Grid.Row="1"
+                    Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                    BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                    BorderThickness="1"
+                    CornerRadius="8"
+                    Padding="12">
+                <StackPanel>
+                    <!-- Text content -->
+                    <TextBlock x:Name="txtContent"
+                               TextWrapping="Wrap"
+                               FontSize="12"
+                               LineHeight="20"
+                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                    
+                    <!-- Code blocks container -->
+                    <ItemsControl x:Name="codeBlocksPanel" Margin="0,8,0,0">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Border BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                                        BorderThickness="1"
+                                        CornerRadius="4"
+                                        Margin="0,0,0,8"
+                                        Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}">
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto"/>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="Auto"/>
+                                        </Grid.RowDefinitions>
+                                        
+                                        <!-- Code block header with language -->
+                                        <Border Grid.Row="0" 
+                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarGradientKey}}"
+                                                Padding="8,4">
+                                            <TextBlock Text="{Binding Language}"
+                                                       FontSize="10"
+                                                       FontWeight="SemiBold"
+                                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                                        </Border>
+                                        
+                                        <!-- Code content -->
+                                        <TextBox Grid.Row="1"
+                                                 Text="{Binding Code, Mode=OneWay}"
+                                                 IsReadOnly="True"
+                                                 FontFamily="Consolas"
+                                                 FontSize="11"
+                                                 Padding="8"
+                                                 BorderThickness="0"
+                                                 Background="Transparent"
+                                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                                 TextWrapping="NoWrap"
+                                                 HorizontalScrollBarVisibility="Auto"
+                                                 VerticalScrollBarVisibility="Auto"/>
+                                        
+                                        <!-- Action buttons -->
+                                        <StackPanel Grid.Row="2" 
+                                                    Orientation="Horizontal" 
+                                                    HorizontalAlignment="Right"
+                                                    Margin="8,4">
+                                            <Button Padding="8,4"
+                                                    FontSize="10"
+                                                    Margin="0,0,4,0"
+                                                    ToolTip="Copy code to clipboard"
+                                                    Tag="{Binding Code}"
+                                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
+                                                    Click="CopyCode_Click">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="Copy"/>
+                                                </StackPanel>
+                                            </Button>
+                                            <Button x:Name="btnApplyCode"
+                                                    Padding="8,4"
+                                                    FontSize="10"
+                                                    ToolTip="Apply this code to the active editor"
+                                                    Tag="{Binding Code}"
+                                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
+                                                    Click="ApplyCode_Click"
+                                                    Visibility="{Binding Path=DataContext.IsApplicable, 
+                                                                RelativeSource={RelativeSource AncestorType=UserControl}, 
+                                                                Converter={StaticResource BoolToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
+                                                    <TextBlock Text="Apply to Editor"/>
+                                                </StackPanel>
+                                            </Button>
+                                        </StackPanel>
+                                    </Grid>
+                                </Border>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </Border>
         </Grid>
     </Border>
 </UserControl>
