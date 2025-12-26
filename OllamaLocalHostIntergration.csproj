@@ -60,12 +60,14 @@
     </Compile>
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
+    <Compile Include="Models\Conversation.cs" />
     <Compile Include="Models\InteractionMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\MyToolWindowCommand.cs" />
     <Compile Include="OllamaLocalHostIntergrationPackage.cs" />
     <Compile Include="Services\CodeEditorService.cs" />
     <Compile Include="Services\CodeModificationService.cs" />
+    <Compile Include="Services\ConversationHistoryService.cs" />
     <Compile Include="Services\MessageParserService.cs" />
     <Compile Include="Services\ModeManager.cs" />
     <Compile Include="Services\OllamaService.cs" />
@@ -102,6 +104,9 @@
     <None Include="PHASE_2_COMPLETE.md" />
     <None Include="PHASE_2_PROGRESS.md" />
     <None Include="PHASE_3_COMPLETE.md" />
+    <None Include="PHASE_4_OVERVIEW.md" />
+    <None Include="PHASE_4_PLAN.md" />
+    <None Include="PHASE_4_QUICK_START.md" />
     <None Include="PROJECT_COMPLETE.md" />
     <None Include="QUICK_FIX_SUMMARY.md" />
     <None Include="QUICK_START.md" />

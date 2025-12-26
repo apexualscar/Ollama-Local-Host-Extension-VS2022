@@ -9,6 +9,7 @@ using EnvDTE;
 using System.Collections.Generic;
 using System.Linq;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
+using System;
 
 namespace OllamaLocalHostIntergration
 {
@@ -21,7 +22,9 @@ namespace OllamaLocalHostIntergration
         private readonly MessageParserService _messageParser;
         private readonly PromptBuilder _promptBuilder;
         private readonly SettingsService _settingsService;
+        private readonly ConversationHistoryService _conversationHistory;
         private ObservableCollection<ChatMessage> _chatMessages;
+        private Conversation _currentConversation;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
         private bool _isInitializing = true;
@@ -38,8 +41,17 @@ namespace OllamaLocalHostIntergration
             _messageParser = new MessageParserService();
             _promptBuilder = new PromptBuilder();
             _settingsService = new SettingsService();
+            _conversationHistory = new ConversationHistoryService();
             _chatMessages = new ObservableCollection<ChatMessage>();
             chatMessagesPanel.ItemsSource = _chatMessages;
+
+            // Initialize current conversation
+            _currentConversation = new Conversation
+            {
+                Title = $"Conversation {DateTime.Now:yyyy-MM-dd HH:mm}",
+                ModelUsed = "Not selected",
+                Mode = InteractionMode.Ask
+            };
 
             // Load saved server address or use default
             string savedServerAddress = _settingsService.GetServerAddress();
@@ -96,7 +108,11 @@ namespace OllamaLocalHostIntergration
 
         private void OnModeChanged(InteractionMode mode)
         {
-            // Mode description can be shown in status bar if needed
+            // Update current conversation mode
+            if (_currentConversation != null)
+            {
+                _currentConversation.Mode = mode;
+            }
         }
 
         private void ComboMode_SelectionChanged(object sender, SelectionChangedEventArgs e)
@@ -165,6 +181,15 @@ namespace OllamaLocalHostIntergration
             // Add user message to chat (parse for consistency)
             var userChatMessage = _messageParser.ParseMessage(userMessage, true);
             _chatMessages.Add(userChatMessage);
+            
+            // Add to conversation history
+            _currentConversation.Messages.Add(userChatMessage);
+            
+            // Set conversation title from first message if still default
+            if (_currentConversation.Messages.Count == 1 && _currentConversation.Title.Contains("Conversation "))
+            {
+                _currentConversation.Title = GenerateTitleFromMessage(userMessage);
+            }
 
             // Clear input
             txtUserInput.Clear();
@@ -212,6 +237,15 @@ namespace OllamaLocalHostIntergration
                 }
                 
                 _chatMessages.Add(responseChatMessage);
+                
+                // Add to conversation history
+                _currentConversation.Messages.Add(responseChatMessage);
+                _currentConversation.ModelUsed = comboModels.SelectedItem as string ?? "Unknown";
+                _currentConversation.Mode = _modeManager.CurrentMode;
+                
+                // Auto-save conversation
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
+                
                 txtStatusBar.Text = responseChatMessage.HasCodeBlocks 
                     ? $"Ready ({responseChatMessage.CodeBlocks.Count} code block(s))" 
                     : "Ready";
@@ -233,6 +267,7 @@ namespace OllamaLocalHostIntergration
                 
                 var errorMessage = new ChatMessage($"Error: {ex.Message}", false);
                 _chatMessages.Add(errorMessage);
+                _currentConversation.Messages.Add(errorMessage);
                 txtStatusBar.Text = $"Error: {ex.Message}";
             }
 
@@ -243,23 +278,74 @@ namespace OllamaLocalHostIntergration
             }
         }
 
-        private async Task<string> GetActiveDocumentTextAsync()
+        /// <summary>
+        /// Generates a conversation title from the first message
+        /// </summary>
+        private string GenerateTitleFromMessage(string message)
         {
-            return await _codeEditorService.GetActiveDocumentTextAsync();
+            // Take first 50 chars or until newline
+            string title = message.Split('\n')[0];
+            if (title.Length > 50)
+            {
+                title = title.Substring(0, 47) + "...";
+            }
+            return title;
         }
 
-        private async void RefreshContextClick(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Starts a new conversation
+        /// </summary>
+        private async void NewConversationClick(object sender, RoutedEventArgs e)
         {
-            await RefreshCodeContextAsync();
+            // Save current conversation if it has messages
+            if (_currentConversation.Messages.Count > 0)
+            {
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
+            }
+            
+            // Create new conversation
+            _currentConversation = new Conversation
+            {
+                Title = $"Conversation {DateTime.Now:yyyy-MM-dd HH:mm}",
+                ModelUsed = comboModels.SelectedItem as string ?? "Not selected",
+                Mode = _modeManager.CurrentMode
+            };
+            
+            // Clear chat UI
+            _chatMessages.Clear();
+            _ollamaService.ClearConversationHistory();
+            
+            txtStatusBar.Text = "New conversation started";
+        }
+        
+        private async void ClearChatClick(object sender, RoutedEventArgs e)
+        {
+            // Save current conversation before clearing if it has messages
+            if (_currentConversation != null && _currentConversation.Messages.Count > 0)
+            {
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
+            }
+            
+            // Start fresh conversation
+            _currentConversation = new Conversation
+            {
+                Title = $"Conversation {DateTime.Now:yyyy-MM-dd HH:mm}",
+                ModelUsed = comboModels.SelectedItem as string ?? "Not selected",
+                Mode = _modeManager.CurrentMode
+            };
+            
+            _chatMessages.Clear();
+            _ollamaService.ClearConversationHistory();
+            txtStatusBar.Text = "Chat cleared - conversation saved";
         }
 
         private async Task RefreshCodeContextAsync()
         {
             txtStatusBar.Text = "Refreshing code context...";
-            
+
             // Get active document text
             _currentCodeContext = await GetActiveDocumentTextAsync() ?? string.Empty;
-            
+
             // Also get selection if available
             var selectedText = await _codeEditorService.GetSelectedTextAsync();
             if (!string.IsNullOrEmpty(selectedText))
@@ -267,12 +353,12 @@ namespace OllamaLocalHostIntergration
                 var language = await _codeEditorService.GetActiveDocumentLanguageAsync();
                 _currentCodeContext = $"Selected {language} code:\n{selectedText}";
             }
-            
+
             txtCodeContext.Text = _currentCodeContext;
-            
+
             // Update token count
             UpdateTokenCount();
-            
+
             int contextLength = _currentCodeContext.Length;
             txtStatusBar.Text = contextLength > 0 ? $"Code context updated ({contextLength} characters)" : "No code context";
         }
@@ -281,7 +367,7 @@ namespace OllamaLocalHostIntergration
         {
             // Only show current context token count, not total
             int tokenCount = _promptBuilder.EstimateTokenCount(_currentCodeContext);
-            
+
             // Use theme-aware foreground color
             txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(
@@ -294,21 +380,9 @@ namespace OllamaLocalHostIntergration
                         Microsoft.VisualStudio.Shell.VsBrushes.ToolWindowTextKey)).Color.B
                 )
             );
-            
+
             // Simple display of current token count
             txtTokenCount.Text = $"Tokens: ~{tokenCount}";
-        }
-
-        private void ClearChatClick(object sender, RoutedEventArgs e)
-        {
-            _chatMessages.Clear();
-            _ollamaService.ClearConversationHistory();
-            txtStatusBar.Text = "Chat cleared";
-        }
-
-        private async void RefreshModelsClick(object sender, RoutedEventArgs e)
-        {
-            await RefreshModelsAsync();
         }
 
         private async Task RefreshModelsAsync()
@@ -385,7 +459,28 @@ namespace OllamaLocalHostIntergration
                 
                 // Save the selected model for next session
                 _settingsService.SaveSelectedModel(selectedModel);
+                
+                // Update current conversation model
+                if (_currentConversation != null)
+                {
+                    _currentConversation.ModelUsed = selectedModel;
+                }
             }
+        }
+
+        private async Task<string> GetActiveDocumentTextAsync()
+        {
+            return await _codeEditorService.GetActiveDocumentTextAsync();
+        }
+
+        private async void RefreshContextClick(object sender, RoutedEventArgs e)
+        {
+            await RefreshCodeContextAsync();
+        }
+
+        private async void RefreshModelsClick(object sender, RoutedEventArgs e)
+        {
+            await RefreshModelsAsync();
         }
 
         /// <summary>
@@ -403,6 +498,7 @@ namespace OllamaLocalHostIntergration
                 var userMessage = $"Please explain this {language} code";
                 var userChatMessage = _messageParser.ParseMessage(userMessage, true);
                 _chatMessages.Add(userChatMessage);
+                _currentConversation.Messages.Add(userChatMessage);
 
                 // Show loading
                 var loadingMessage = new ChatMessage("Analyzing code...", false);
@@ -416,6 +512,10 @@ namespace OllamaLocalHostIntergration
                 _chatMessages.Remove(loadingMessage);
                 var responseChatMessage = _messageParser.ParseMessage(response, false);
                 _chatMessages.Add(responseChatMessage);
+                _currentConversation.Messages.Add(responseChatMessage);
+                
+                // Save conversation
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
                 
                 txtStatusBar.Text = "Explanation complete";
                 chatMessagesScroll.ScrollToBottom();
@@ -441,6 +541,7 @@ namespace OllamaLocalHostIntergration
                 var userMessage = $"Please refactor this {language} code to improve readability and performance";
                 var userChatMessage = _messageParser.ParseMessage(userMessage, true);
                 _chatMessages.Add(userChatMessage);
+                _currentConversation.Messages.Add(userChatMessage);
 
                 // Show loading
                 var loadingMessage = new ChatMessage("Refactoring code...", false);
@@ -471,6 +572,11 @@ namespace OllamaLocalHostIntergration
                 }
                 
                 _chatMessages.Add(responseChatMessage);
+                _currentConversation.Messages.Add(responseChatMessage);
+                
+                // Save conversation
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
+                
                 txtStatusBar.Text = "Refactoring complete";
                 chatMessagesScroll.ScrollToBottom();
             }
@@ -495,6 +601,7 @@ namespace OllamaLocalHostIntergration
                 var userMessage = $"Please find potential issues, bugs, or improvements in this {language} code";
                 var userChatMessage = _messageParser.ParseMessage(userMessage, true);
                 _chatMessages.Add(userChatMessage);
+                _currentConversation.Messages.Add(userChatMessage);
 
                 // Show loading
                 var loadingMessage = new ChatMessage("Analyzing for issues...", false);
@@ -508,6 +615,10 @@ namespace OllamaLocalHostIntergration
                 _chatMessages.Remove(loadingMessage);
                 var responseChatMessage = _messageParser.ParseMessage(response, false);
                 _chatMessages.Add(responseChatMessage);
+                _currentConversation.Messages.Add(responseChatMessage);
+                
+                // Save conversation
+                await _conversationHistory.SaveConversationAsync(_currentConversation);
                 
                 txtStatusBar.Text = "Analysis complete";
                 chatMessagesScroll.ScrollToBottom();
