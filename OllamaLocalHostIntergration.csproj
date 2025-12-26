@@ -99,6 +99,7 @@
     <None Include="diagnose.ps1" />
     <None Include="docs\BUGFIX_MODEL_NAME_AND_CODEBLOCKS.md" />
     <None Include="docs\DEPLOYMENT_PLAN_AGENTIC.md" />
+    <None Include="docs\DEPLOYMENT_PLAN_UPDATED.md" />
     <None Include="docs\INDEX.md" />
     <None Include="docs\ORGANIZATION_COMPLETE.md" />
     <None Include="docs\PHASE_4_2_COMPLETE.md" />
@@ -117,6 +118,9 @@
     <None Include="docs\PHASE_5_3_TESTING.md" />
     <None Include="docs\PHASE_5_4_COMPLETE.md" />
     <None Include="docs\PHASE_5_4_PLAN.md" />
+    <None Include="docs\PHASE_5_5_1_COMPLETE.md" />
+    <None Include="docs\PHASE_5_5_1_STYLING_FIX.md" />
+    <None Include="docs\PHASE_5_5_7_QUICK_REF.md" />
     <None Include="docs\PHASE_5_ALL_COMPLETE.md" />
     <None Include="docs\PHASE_5_FIX_PLAN.md" />
     <None Include="docs\START_HERE_FIXES.md" />

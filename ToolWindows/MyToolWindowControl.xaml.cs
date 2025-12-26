@@ -27,6 +27,7 @@ namespace OllamaLocalHostIntergration
         private readonly TemplateService _templateService;
         private ObservableCollection<ChatMessage> _chatMessages;
         private ObservableCollection<FileContextItem> _contextFileItems;
+        private ObservableCollection<Conversation> _savedConversations; // NEW
         private Conversation _currentConversation;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -34,7 +35,6 @@ namespace OllamaLocalHostIntergration
 
         public MyToolWindowControl()
         {
-            InitializeComponent();
             
             // Initialize services first
             _ollamaService = new OllamaService();
@@ -49,8 +49,15 @@ namespace OllamaLocalHostIntergration
             _templateService = new TemplateService();
             _chatMessages = new ObservableCollection<ChatMessage>();
             _contextFileItems = new ObservableCollection<FileContextItem>();
+            _savedConversations = new ObservableCollection<Conversation>(); // NEW
+            
+            // Initialize component FIRST to create UI elements
+            InitializeComponent();
+            
+            // Then bind collections to UI elements
             chatMessagesPanel.ItemsSource = _chatMessages;
             lstContextFiles.ItemsSource = _contextFileItems;
+            comboConversations.ItemsSource = _savedConversations; // NEW
 
             // Initialize current conversation
             _currentConversation = new Conversation
@@ -84,6 +91,8 @@ namespace OllamaLocalHostIntergration
             _ = RefreshCodeContextAsync();
             // Load models from Ollama server
             _ = RefreshModelsAsync();
+            // Load saved conversations
+            _ = LoadSavedConversationsAsync();
         }
 
         private void TxtServerAddress_LostFocus(object sender, RoutedEventArgs e)
@@ -295,6 +304,12 @@ namespace OllamaLocalHostIntergration
                 // Auto-save conversation
                 await _conversationHistory.SaveConversationAsync(_currentConversation);
                 
+                // Refresh dropdown if this was the first message
+                if (_currentConversation.Messages.Count == 2) // User message + AI response
+                {
+                    await LoadSavedConversationsAsync();
+                }
+                
                 txtStatusBar.Text = responseChatMessage.HasCodeBlocks 
                     ? $"Ready ({responseChatMessage.CodeBlocks.Count} code block(s))" 
                     : "Ready";
@@ -364,28 +379,67 @@ namespace OllamaLocalHostIntergration
             _chatMessages.Clear();
             _ollamaService.ClearConversationHistory();
             
+            // Reload conversations dropdown
+            await LoadSavedConversationsAsync();
+            
             txtStatusBar.Text = "New conversation started";
         }
         
         private async void ClearChatClick(object sender, RoutedEventArgs e)
         {
-            // Save current conversation before clearing if it has messages
-            if (_currentConversation != null && _currentConversation.Messages.Count > 0)
+            // This method is now deprecated - use DeleteConversationClick instead
+            // But keep for backward compatibility with old button references
+            DeleteConversationClick(sender, e);
+        }
+
+        private async void DeleteConversationClick(object sender, RoutedEventArgs e)
+        {
+            if (_currentConversation == null || _currentConversation.Messages.Count == 0)
             {
-                await _conversationHistory.SaveConversationAsync(_currentConversation);
+                txtStatusBar.Text = "No conversation to delete";
+                return;
             }
-            
-            // Start fresh conversation
-            _currentConversation = new Conversation
+
+            // Confirm deletion
+            var result = System.Windows.MessageBox.Show(
+                $"Delete conversation \"{_currentConversation.Title}\"?\n\nThis action cannot be undone.",
+                "Delete Conversation",
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning
+            );
+
+            if (result == System.Windows.MessageBoxResult.Yes)
             {
-                Title = $"Conversation {DateTime.Now:yyyy-MM-dd HH:mm}",
-                ModelUsed = comboModels.SelectedItem as string ?? "Not selected",
-                Mode = _modeManager.CurrentMode
-            };
-            
-            _chatMessages.Clear();
-            _ollamaService.ClearConversationHistory();
-            txtStatusBar.Text = "Chat cleared - conversation saved";
+                try
+                {
+                    // Delete from disk
+                    await _conversationHistory.DeleteConversationAsync(_currentConversation.Id);
+                    
+                    // Remove from dropdown
+                    _savedConversations.Remove(_currentConversation);
+                    
+                    // Create new conversation
+                    _currentConversation = new Conversation
+                    {
+                        Title = $"Conversation {DateTime.Now:yyyy-MM-dd HH:mm}",
+                        ModelUsed = comboModels.SelectedItem as string ?? "Not selected",
+                        Mode = _modeManager.CurrentMode
+                    };
+                    
+                    // Clear chat UI
+                    _chatMessages.Clear();
+                    _ollamaService.ClearConversationHistory();
+                    
+                    // Reload conversations
+                    await LoadSavedConversationsAsync();
+                    
+                    txtStatusBar.Text = "Conversation deleted";
+                }
+                catch (Exception ex)
+                {
+                    txtStatusBar.Text = $"Failed to delete conversation: {ex.Message}";
+                }
+            }
         }
 
         private async Task RefreshCodeContextAsync()
@@ -788,6 +842,85 @@ namespace OllamaLocalHostIntergration
             else
             {
                 txtContextFilesSummary.Text = $"{fileCount} file(s), ~{totalTokens} total tokens";
+            }
+        }
+
+        /// <summary>
+        /// Loads all saved conversations into the dropdown
+        /// </summary>
+        private async Task LoadSavedConversationsAsync()
+        {
+            try
+            {
+                var conversations = await _conversationHistory.LoadAllConversationsAsync();
+                
+                _savedConversations.Clear();
+                
+                // Add "Current" conversation at top if it has messages
+                if (_currentConversation != null && _currentConversation.Messages.Count > 0)
+                {
+                    _savedConversations.Add(_currentConversation);
+                }
+                
+                // Add saved conversations
+                foreach (var conversation in conversations)
+                {
+                    if (conversation.Id != _currentConversation?.Id)
+                    {
+                        _savedConversations.Add(conversation);
+                    }
+                }
+                
+                // Select current conversation
+                if (_currentConversation != null && _savedConversations.Contains(_currentConversation))
+                {
+                    comboConversations.SelectedItem = _currentConversation;
+                }
+                else if (_savedConversations.Count > 0)
+                {
+                    comboConversations.SelectedIndex = 0;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load conversations: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Handles conversation selection from dropdown
+        /// </summary>
+        private async void ComboConversations_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (_isInitializing || comboConversations.SelectedItem == null)
+                return;
+
+            if (comboConversations.SelectedItem is Conversation selectedConversation)
+            {
+                // Save current conversation if it has messages
+                if (_currentConversation != null && _currentConversation.Messages.Count > 0)
+                {
+                    await _conversationHistory.SaveConversationAsync(_currentConversation);
+                }
+                
+                // Load selected conversation
+                _currentConversation = selectedConversation;
+                
+                // Clear and load messages
+                _chatMessages.Clear();
+                foreach (var message in _currentConversation.Messages)
+                {
+                    _chatMessages.Add(message);
+                }
+                
+                // Update UI
+                txtStatusBar.Text = $"Loaded conversation: {_currentConversation.Title}";
+                
+                // Scroll to bottom
+                if (chatMessagesScroll != null)
+                {
+                    chatMessagesScroll.ScrollToBottom();
+                }
             }
         }
     }

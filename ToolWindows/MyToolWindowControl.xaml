@@ -25,14 +25,96 @@
     
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="*"/>
-            <RowDefinition Height="Auto"/>
-            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/> <!-- NEW: Conversation Header -->
+            <RowDefinition Height="*"/>    <!-- Chat Area -->
+            <RowDefinition Height="Auto"/> <!-- Input Area -->
+            <RowDefinition Height="Auto"/> <!-- Status Bar -->
         </Grid.RowDefinitions>
+
+        <!-- NEW: Conversation Management Header -->
+        <Border Grid.Row="0"
+                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                BorderThickness="0,0,0,1"
+                Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                Padding="12,8">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+                
+                <!-- Conversation Dropdown -->
+                <ComboBox x:Name="comboConversations"
+                          Grid.Column="0"
+                          Height="28"
+                          FontSize="11"
+                          VerticalAlignment="Center"
+                          VerticalContentAlignment="Center"
+                          Margin="0,0,8,0"
+                          Padding="8,4"
+                          Background="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"
+                          Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                          BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"
+                          SelectionChanged="ComboConversations_SelectionChanged">
+                    <ComboBox.ItemContainerStyle>
+                        <Style TargetType="ComboBoxItem">
+                            <Setter Property="VerticalContentAlignment" Value="Center"/>
+                            <Setter Property="Padding" Value="8,4"/>
+                        </Style>
+                    </ComboBox.ItemContainerStyle>
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                                <TextBlock Text="&#xE8F2;" 
+                                           FontFamily="Segoe MDL2 Assets"
+                                           FontSize="12" 
+                                           Margin="0,0,6,0"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                                <TextBlock Text="{Binding Title}" 
+                                           FontSize="11"
+                                           VerticalAlignment="Center"
+                                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+                
+                <!-- New Conversation Button -->
+                <Button Grid.Column="1"
+                        Content="+ New"
+                        Click="NewConversationClick"
+                        Height="28"
+                        Margin="0,0,4,0"
+                        Padding="12,4"
+                        VerticalAlignment="Center"
+                        ToolTip="New conversation"
+                        FontSize="11"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                
+                <!-- Delete Conversation Button -->
+                <Button Grid.Column="2"
+                        Content="&#xE74D;"
+                        FontFamily="Segoe MDL2 Assets"
+                        Click="DeleteConversationClick"
+                        Width="28"
+                        Height="28"
+                        VerticalAlignment="Center"
+                        ToolTip="Delete conversation"
+                        FontSize="12"
+                        Padding="0"
+                        VerticalContentAlignment="Center"
+                        HorizontalContentAlignment="Center"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+            </Grid>
+        </Border>
 
         <!-- Chat Messages Area -->
         <ScrollViewer x:Name="chatMessagesScroll" 
-                      Grid.Row="0" 
+                      Grid.Row="1" 
                       VerticalScrollBarVisibility="Auto"
                       Padding="16,16,16,8"
                       Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
@@ -46,7 +128,7 @@
         </ScrollViewer>
 
         <!-- Input Area with Controls (Copilot-style at bottom) -->
-        <Border Grid.Row="1" 
+        <Border Grid.Row="2" 
                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
                 BorderThickness="0,1,0,0"
                 Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
@@ -63,8 +145,6 @@
                     <Grid.ColumnDefinitions>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="*"/>
-                        <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
@@ -116,31 +196,13 @@
                         </ComboBox.ItemTemplate>
                     </ComboBox>
                     
-                    <!-- New Conversation Button -->
+                    <!-- Settings Button -->
                     <Button Grid.Column="2"
-                            Content="&#xE8F4;"
-                            FontFamily="Segoe MDL2 Assets"
-                            Click="NewConversationClick"
-                            Width="28"
-                            Height="28"
-                            Margin="0,0,4,0"
-                            VerticalAlignment="Center"
-                            ToolTip="New conversation"
-                            FontSize="12"
-                            Padding="0"
-                            VerticalContentAlignment="Center"
-                            HorizontalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
-                    
-                    <!-- Settings Button (Smaller) -->
-                    <Button Grid.Column="3"
                             x:Name="btnSettings"
                             Content="&#xE713;"
                             FontFamily="Segoe MDL2 Assets"
                             Width="28"
                             Height="28"
-                            Margin="0,0,4,0"
                             VerticalAlignment="Center"
                             ToolTip="Settings"
                             FontSize="12"
@@ -150,22 +212,6 @@
                             Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
                             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
                             Click="SettingsClick"/>
-                    
-                    <!-- Clear Chat Button (Top Right like Copilot) -->
-                    <Button Grid.Column="4"
-                            Content="&#xE74D;"
-                            FontFamily="Segoe MDL2 Assets"
-                            Click="ClearChatClick"
-                            Width="28"
-                            Height="28"
-                            VerticalAlignment="Center"
-                            ToolTip="Clear chat (saves conversation)"
-                            FontSize="12"
-                            Padding="0"
-                            VerticalContentAlignment="Center"
-                            HorizontalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                 </Grid>
                 
                 <!-- Settings Panel (Collapsible) -->
@@ -210,7 +256,7 @@
                                      CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
                             <Button Grid.Column="2"
-                                    Content="&#xE8EF;"
+                                    Content="&#xE72C;"
                                     FontFamily="Segoe MDL2 Assets"
                                     Click="RefreshModelsClick"
                                     Width="26"
@@ -371,7 +417,7 @@
         </Border>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" 
+        <Border Grid.Row="3" 
                 Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
                 BorderThickness="0,1,0,0"
