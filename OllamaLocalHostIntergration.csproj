@@ -60,6 +60,7 @@
     </Compile>
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
+    <Compile Include="Models\CodeTemplate.cs" />
     <Compile Include="Models\Conversation.cs" />
     <Compile Include="Models\FileContextItem.cs" />
     <Compile Include="Models\InteractionMode.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="Services\OllamaService.cs" />
     <Compile Include="Services\PromptBuilder.cs" />
     <Compile Include="Services\SettingsService.cs" />
+    <Compile Include="Services\TemplateService.cs" />
     <Compile Include="source.extension.cs">
       <AutoGen>True</AutoGen>
       <DesignTime>True</DesignTime>
