@@ -203,26 +203,44 @@ namespace OllamaLocalHostIntergration
                 string codeContext = _currentCodeContext;
                 string language = await _codeEditorService.GetActiveDocumentLanguageAsync();
 
-                // Show loading message
-                var loadingMessage = new ChatMessage("Thinking...", false);
-                _chatMessages.Add(loadingMessage);
-                txtStatusBar.Text = "Waiting for response...";
+                // Create streaming message placeholder
+                var streamingMessage = new ChatMessage("", false);
+                _chatMessages.Add(streamingMessage);
+                txtStatusBar.Text = "Receiving response...";
                 
-                // Get response from Ollama using the chat API with system prompt
-                string response = await _ollamaService.GenerateChatResponseAsync(userMessage, systemPrompt, codeContext);
+                // Stream the response with real-time updates
+                string fullResponse = await _ollamaService.GenerateStreamingChatResponseAsync(
+                    userMessage, 
+                    token => 
+                    {
+                        // Update UI on each token received
+                        Dispatcher.Invoke(() =>
+                        {
+                            streamingMessage.Content += token;
+                            
+                            // Auto-scroll to bottom
+                            if (chatMessagesScroll != null)
+                            {
+                                chatMessagesScroll.ScrollToBottom();
+                            }
+                        });
+                    },
+                    systemPrompt, 
+                    codeContext
+                );
                 
-                // Remove loading message
-                _chatMessages.Remove(loadingMessage);
+                // Remove streaming placeholder
+                _chatMessages.Remove(streamingMessage);
                 
-                // Parse response and create rich chat message
-                var responseChatMessage = _messageParser.ParseMessage(response, false);
+                // Parse complete response for code blocks and create rich message
+                var responseChatMessage = _messageParser.ParseMessage(fullResponse, false);
                 
                 // For Agent mode, check if we can create a CodeEdit
                 if (_modeManager.IsAgentMode && responseChatMessage.HasCodeBlocks)
                 {
                     try
                     {
-                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(response, codeContext);
+                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(fullResponse, codeContext);
                         if (codeEdit != null)
                         {
                             responseChatMessage.AssociatedCodeEdit = codeEdit;
@@ -255,10 +273,10 @@ namespace OllamaLocalHostIntergration
             }
             catch (Exception ex)
             {
-                // Remove loading message if it exists
+                // Remove streaming message if it exists
                 for (int i = _chatMessages.Count - 1; i >= 0; i--)
                 {
-                    if (_chatMessages[i].Content == "Thinking...")
+                    if (_chatMessages[i].Content == "" || _chatMessages[i].Content == "Thinking...")
                     {
                         _chatMessages.RemoveAt(i);
                         break;

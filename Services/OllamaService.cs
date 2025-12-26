@@ -251,6 +251,107 @@ Provide the complete modified code in a code block. Explain the changes you made
         {
             return _conversationHistory.AsReadOnly();
         }
+
+        /// <summary>
+        /// Generate a streaming chat response with real-time token updates
+        /// </summary>
+        /// <param name="userMessage">The user's message</param>
+        /// <param name="onTokenReceived">Callback invoked for each token received</param>
+        /// <param name="systemPrompt">Optional system prompt</param>
+        /// <param name="context">Optional code context</param>
+        /// <returns>The complete response</returns>
+        public async Task<string> GenerateStreamingChatResponseAsync(
+            string userMessage, 
+            Action<string> onTokenReceived,
+            string systemPrompt = null, 
+            string context = "")
+        {
+            try
+            {
+                // Add system prompt if provided and not already in history
+                if (!string.IsNullOrEmpty(systemPrompt) && (_conversationHistory.Count == 0 || _conversationHistory[0].role != "system"))
+                {
+                    _conversationHistory.Insert(0, new OllamaChatMessage { role = "system", content = systemPrompt });
+                }
+
+                // Build the user message with context if provided
+                string fullMessage = string.IsNullOrEmpty(context) 
+                    ? userMessage 
+                    : $"Context:\n```\n{context}\n```\n\nQuestion: {userMessage}";
+
+                // Add user message to history
+                _conversationHistory.Add(new OllamaChatMessage { role = "user", content = fullMessage });
+
+                var requestBody = new
+                {
+                    model = _model,
+                    messages = _conversationHistory,
+                    stream = true  // Enable streaming
+                };
+
+                var content = new StringContent(
+                    JsonConvert.SerializeObject(requestBody),
+                    Encoding.UTF8,
+                    "application/json");
+
+                var request = new HttpRequestMessage(HttpMethod.Post, $"{_serverAddress}/api/chat")
+                {
+                    Content = content
+                };
+
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                response.EnsureSuccessStatusCode();
+
+                var fullResponse = new StringBuilder();
+
+                using (var stream = await response.Content.ReadAsStreamAsync())
+                using (var reader = new System.IO.StreamReader(stream))
+                {
+                    string line;
+                    while ((line = await reader.ReadLineAsync()) != null)
+                    {
+                        if (string.IsNullOrWhiteSpace(line))
+                            continue;
+
+                        try
+                        {
+                            var streamResponse = JsonConvert.DeserializeObject<OllamaChatStreamResponse>(line);
+                            
+                            if (streamResponse?.message?.content != null)
+                            {
+                                string token = streamResponse.message.content;
+                                fullResponse.Append(token);
+                                
+                                // Invoke callback with the token
+                                onTokenReceived?.Invoke(token);
+                            }
+
+                            // Check if streaming is done
+                            if (streamResponse?.done == true)
+                            {
+                                break;
+                            }
+                        }
+                        catch (JsonException)
+                        {
+                            // Skip malformed JSON lines
+                            continue;
+                        }
+                    }
+                }
+
+                string assistantMessage = fullResponse.ToString();
+
+                // Add assistant response to history
+                _conversationHistory.Add(new OllamaChatMessage { role = "assistant", content = assistantMessage });
+
+                return assistantMessage;
+            }
+            catch (Exception ex)
+            {
+                return $"Error: {ex.Message}";
+            }
+        }
     }
 
     public class OllamaResponse
@@ -265,6 +366,12 @@ Provide the complete modified code in a code block. Explain the changes you made
     }
 
     public class OllamaChatResponse
+    {
+        public OllamaChatMessage message { get; set; }
+        public bool done { get; set; }
+    }
+
+    public class OllamaChatStreamResponse
     {
         public OllamaChatMessage message { get; set; }
         public bool done { get; set; }

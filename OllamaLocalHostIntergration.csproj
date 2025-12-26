@@ -91,11 +91,18 @@
     <None Include="DEPLOYMENT_PLAN.md" />
     <None Include="diagnose-ollama.ps1" />
     <None Include="diagnose.ps1" />
+    <None Include="docs\INDEX.md" />
+    <None Include="docs\ORGANIZATION_COMPLETE.md" />
+    <None Include="docs\PHASE_4_2_COMPLETE.md" />
+    <None Include="docs\PHASE_4_2_SUMMARY.md" />
+    <None Include="docs\PHASE_4_2_TESTING.md" />
     <None Include="EXTENSION_NOT_DETECTING.md" />
     <None Include="fix-xaml-link.ps1" />
     <None Include="FIX_BUILD_NOW.md" />
     <None Include="ICON_FIX_ALTERNATIVES.md" />
     <None Include="OLLAMA_TROUBLESHOOTING.md" />
+    <None Include="organize-all-docs.ps1" />
+    <None Include="organize-docs.ps1" />
     <None Include="PHASE_1_COMPLETION.md" />
     <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
     <None Include="PHASE_1_SUMMARY.md" />
@@ -104,6 +111,8 @@
     <None Include="PHASE_2_COMPLETE.md" />
     <None Include="PHASE_2_PROGRESS.md" />
     <None Include="PHASE_3_COMPLETE.md" />
+    <None Include="PHASE_4_1_COMPLETE.md" />
+    <None Include="PHASE_4_1_TESTING.md" />
     <None Include="PHASE_4_OVERVIEW.md" />
     <None Include="PHASE_4_PLAN.md" />
     <None Include="PHASE_4_QUICK_START.md" />
