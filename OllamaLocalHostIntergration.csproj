@@ -61,6 +61,7 @@
     <Compile Include="Models\ChatMessage.cs" />
     <Compile Include="Models\CodeEdit.cs" />
     <Compile Include="Models\Conversation.cs" />
+    <Compile Include="Models\FileContextItem.cs" />
     <Compile Include="Models\InteractionMode.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Commands\MyToolWindowCommand.cs" />
@@ -68,6 +69,7 @@
     <Compile Include="Services\CodeEditorService.cs" />
     <Compile Include="Services\CodeModificationService.cs" />
     <Compile Include="Services\ConversationHistoryService.cs" />
+    <Compile Include="Services\FileContextService.cs" />
     <Compile Include="Services\MessageParserService.cs" />
     <Compile Include="Services\ModeManager.cs" />
     <Compile Include="Services\OllamaService.cs" />
@@ -96,6 +98,7 @@
     <None Include="docs\PHASE_4_2_COMPLETE.md" />
     <None Include="docs\PHASE_4_2_SUMMARY.md" />
     <None Include="docs\PHASE_4_2_TESTING.md" />
+    <None Include="docs\PHASE_4_3_COMPLETE.md" />
     <None Include="EXTENSION_NOT_DETECTING.md" />
     <None Include="fix-xaml-link.ps1" />
     <None Include="FIX_BUILD_NOW.md" />

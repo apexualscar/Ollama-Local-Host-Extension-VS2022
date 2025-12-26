@@ -262,8 +262,76 @@
                                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                         </Grid>
                         
+                        <!-- Context Files Section -->
+                        <TextBlock Text="Context Files:" 
+                                   FontSize="11" 
+                                   Margin="0,4,0,4"
+                                   FontWeight="SemiBold"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                        <ListBox x:Name="lstContextFiles"
+                                 Height="80"
+                                 Margin="0,0,0,4"
+                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
+                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}">
+                            <ListBox.ItemTemplate>
+                                <DataTemplate>
+                                    <Grid Margin="0,2">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*"/>
+                                            <ColumnDefinition Width="Auto"/>
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0"
+                                                   Text="{Binding DisplayText}"
+                                                   FontSize="10"
+                                                   VerticalAlignment="Center"
+                                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                                        <Button Grid.Column="1"
+                                                Content="&#x00D7;"
+                                                Width="18"
+                                                Height="18"
+                                                FontSize="14"
+                                                Padding="0"
+                                                Margin="4,0,0,0"
+                                                ToolTip="Remove file"
+                                                Click="RemoveContextFileClick"
+                                                Tag="{Binding FilePath}"
+                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListBox.ItemTemplate>
+                        </ListBox>
+                        <Grid Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            <Button Grid.Column="0"
+                                    Content="+ Add File"
+                                    Click="AddContextFileClick"
+                                    FontSize="10"
+                                    Padding="6,4"
+                                    HorizontalAlignment="Left"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                            <Button Grid.Column="1"
+                                    Content="Clear All"
+                                    Click="ClearContextFilesClick"
+                                    FontSize="10"
+                                    Padding="6,4"
+                                    Margin="4,0,0,0"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                        </Grid>
+                        <TextBlock x:Name="txtContextFilesSummary"
+                                   Text="No files in context"
+                                   FontSize="10"
+                                   Margin="0,0,0,8"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                        
                         <!-- Code Context -->
-                        <TextBlock Text="Code Context:" 
+                        <TextBlock Text="Active Document Context:" 
                                    FontSize="11" 
                                    Margin="0,0,0,4"
                                    FontWeight="SemiBold"

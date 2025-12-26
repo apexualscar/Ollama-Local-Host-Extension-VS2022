@@ -23,7 +23,9 @@ namespace OllamaLocalHostIntergration
         private readonly PromptBuilder _promptBuilder;
         private readonly SettingsService _settingsService;
         private readonly ConversationHistoryService _conversationHistory;
+        private readonly FileContextService _fileContextService;
         private ObservableCollection<ChatMessage> _chatMessages;
+        private ObservableCollection<FileContextItem> _contextFileItems;
         private Conversation _currentConversation;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -42,8 +44,11 @@ namespace OllamaLocalHostIntergration
             _promptBuilder = new PromptBuilder();
             _settingsService = new SettingsService();
             _conversationHistory = new ConversationHistoryService();
+            _fileContextService = new FileContextService();
             _chatMessages = new ObservableCollection<ChatMessage>();
+            _contextFileItems = new ObservableCollection<FileContextItem>();
             chatMessagesPanel.ItemsSource = _chatMessages;
+            lstContextFiles.ItemsSource = _contextFileItems;
 
             // Initialize current conversation
             _currentConversation = new Conversation
@@ -199,8 +204,28 @@ namespace OllamaLocalHostIntergration
                 // Get system prompt based on current mode
                 string systemPrompt = _modeManager.GetSystemPrompt();
 
-                // Use the latest code context
+                // Build combined context from active document + multi-file context
                 string codeContext = _currentCodeContext;
+                
+                // Add multi-file context if files are selected
+                if (_fileContextService.GetFileCount() > 0)
+                {
+                    string multiFileContext = await _fileContextService.BuildMultiFileContextAsync();
+                    
+                    if (!string.IsNullOrEmpty(multiFileContext))
+                    {
+                        // Combine current document context with multi-file context
+                        if (!string.IsNullOrEmpty(codeContext))
+                        {
+                            codeContext = $"=== Active Document ===\n{codeContext}\n\n=== Additional Context Files ===\n{multiFileContext}";
+                        }
+                        else
+                        {
+                            codeContext = multiFileContext;
+                        }
+                    }
+                }
+                
                 string language = await _codeEditorService.GetActiveDocumentLanguageAsync();
 
                 // Create streaming message placeholder
@@ -383,9 +408,11 @@ namespace OllamaLocalHostIntergration
 
         private void UpdateTokenCount()
         {
-            // Only show current context token count, not total
-            int tokenCount = _promptBuilder.EstimateTokenCount(_currentCodeContext);
-
+            // Calculate token count for current context + multi-file context
+            int currentContextTokens = _promptBuilder.EstimateTokenCount(_currentCodeContext);
+            int multiFileTokens = _fileContextService.GetTotalTokenCount();
+            int totalTokens = currentContextTokens + multiFileTokens;
+            
             // Use theme-aware foreground color
             txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(
@@ -398,9 +425,16 @@ namespace OllamaLocalHostIntergration
                         Microsoft.VisualStudio.Shell.VsBrushes.ToolWindowTextKey)).Color.B
                 )
             );
-
-            // Simple display of current token count
-            txtTokenCount.Text = $"Tokens: ~{tokenCount}";
+            
+            // Show breakdown if multi-file context is present
+            if (multiFileTokens > 0)
+            {
+                txtTokenCount.Text = $"Tokens: ~{totalTokens} (Active: ~{currentContextTokens}, Files: ~{multiFileTokens})";
+            }
+            else
+            {
+                txtTokenCount.Text = $"Tokens: ~{totalTokens}";
+            }
         }
 
         private async Task RefreshModelsAsync()
@@ -644,6 +678,107 @@ namespace OllamaLocalHostIntergration
             catch (Exception ex)
             {
                 txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+        }
+        
+        /// <summary>
+        /// Adds a file to the multi-file context
+        /// </summary>
+        private async void AddContextFileClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Use OpenFileDialog
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Select File to Add to Context",
+                    Filter = "Code Files|*.cs;*.vb;*.fs;*.cpp;*.h;*.hpp;*.c;*.java;*.py;*.js;*.ts;*.xml;*.xaml;*.json|All Files|*.*",
+                    Multiselect = true
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    foreach (var filePath in dialog.FileNames)
+                    {
+                        await _fileContextService.AddFileAsync(filePath);
+                        
+                        var fileName = System.IO.Path.GetFileName(filePath);
+                        var tokenCount = _fileContextService.GetFileTokenCount(filePath);
+                        
+                        _contextFileItems.Add(new FileContextItem
+                        {
+                            FilePath = filePath,
+                            FileName = fileName,
+                            TokenCount = tokenCount
+                        });
+                    }
+                    
+                    UpdateFileContextSummary();
+                    UpdateTokenCount();
+                    txtStatusBar.Text = $"Added {dialog.FileNames.Length} file(s) to context";
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error adding file: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Removes a file from the context
+        /// </summary>
+        private void RemoveContextFileClick(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                if (sender is System.Windows.Controls.Button button && button.Tag is string filePath)
+                {
+                    _fileContextService.RemoveFile(filePath);
+                    
+                    var itemToRemove = _contextFileItems.FirstOrDefault(i => i.FilePath == filePath);
+                    if (itemToRemove != null)
+                    {
+                        _contextFileItems.Remove(itemToRemove);
+                    }
+                    
+                    UpdateFileContextSummary();
+                    UpdateTokenCount();
+                    txtStatusBar.Text = "File removed from context";
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error removing file: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Clears all context files
+        /// </summary>
+        private void ClearContextFilesClick(object sender, RoutedEventArgs e)
+        {
+            _fileContextService.ClearFiles();
+            _contextFileItems.Clear();
+            UpdateFileContextSummary();
+            UpdateTokenCount();
+            txtStatusBar.Text = "Context files cleared";
+        }
+
+        /// <summary>
+        /// Updates the file context summary display
+        /// </summary>
+        private void UpdateFileContextSummary()
+        {
+            int fileCount = _fileContextService.GetFileCount();
+            int totalTokens = _fileContextService.GetTotalTokenCount();
+            
+            if (fileCount == 0)
+            {
+                txtContextFilesSummary.Text = "No files in context";
+            }
+            else
+            {
+                txtContextFilesSummary.Text = $"{fileCount} file(s), ~{totalTokens} total tokens";
             }
         }
     }
