@@ -279,26 +279,24 @@ namespace OllamaLocalHostIntergration
 
         private void UpdateTokenCount()
         {
+            // Only show current context token count, not total
             int tokenCount = _promptBuilder.EstimateTokenCount(_currentCodeContext);
-            int conversationTokens = _ollamaService.GetConversationMessageCount() * 50; // Rough estimate
-            int totalTokens = tokenCount + conversationTokens;
             
-            // Color code based on usage
-            if (totalTokens > 6000)
-            {
-                txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.OrangeRed);
-                txtTokenCount.Text = $"⚠ Tokens: ~{totalTokens} / 8000 (Approaching limit)";
-            }
-            else if (totalTokens > 4000)
-            {
-                txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Orange);
-                txtTokenCount.Text = $"Tokens: ~{totalTokens} / 8000";
-            }
-            else
-            {
-                txtTokenCount.Foreground = System.Windows.SystemColors.ControlTextBrush;
-                txtTokenCount.Text = $"Tokens: ~{totalTokens} / 8000";
-            }
+            // Use theme-aware foreground color
+            txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(
+                System.Windows.Media.Color.FromArgb(
+                    255,
+                    ((System.Windows.Media.SolidColorBrush)FindResource(
+                        Microsoft.VisualStudio.Shell.VsBrushes.ToolWindowTextKey)).Color.R,
+                    ((System.Windows.Media.SolidColorBrush)FindResource(
+                        Microsoft.VisualStudio.Shell.VsBrushes.ToolWindowTextKey)).Color.G,
+                    ((System.Windows.Media.SolidColorBrush)FindResource(
+                        Microsoft.VisualStudio.Shell.VsBrushes.ToolWindowTextKey)).Color.B
+                )
+            );
+            
+            // Simple display of current token count
+            txtTokenCount.Text = $"Tokens: ~{tokenCount}";
         }
 
         private void ClearChatClick(object sender, RoutedEventArgs e)

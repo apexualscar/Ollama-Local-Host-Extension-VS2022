@@ -61,15 +61,23 @@ namespace OllamaLocalHostIntergration.Controls
                 try
                 {
                     Clipboard.SetText(code);
-                    // Visual feedback
-                    button.Content = "? Copied!";
+                    // Visual feedback - update the button content
+                    var originalContent = button.Content;
+                    
+                    var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                    var icon = new TextBlock { Text = "\uE8FB", FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 4, 0) };
+                    var text = new TextBlock { Text = "Copied!" };
+                    stackPanel.Children.Add(icon);
+                    stackPanel.Children.Add(text);
+                    button.Content = stackPanel;
+                    
                     var timer = new System.Windows.Threading.DispatcherTimer
                     {
                         Interval = TimeSpan.FromSeconds(2)
                     };
                     timer.Tick += (s, args) =>
                     {
-                        button.Content = "?? Copy";
+                        button.Content = originalContent;
                         timer.Stop();
                     };
                     timer.Start();
@@ -107,7 +115,12 @@ namespace OllamaLocalHostIntergration.Controls
                             
                             if (success)
                             {
-                                button.Content = "? Applied!";
+                                var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                                var icon = new TextBlock { Text = "\uE8FB", FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 4, 0) };
+                                var text = new TextBlock { Text = "Applied!" };
+                                stackPanel.Children.Add(icon);
+                                stackPanel.Children.Add(text);
+                                button.Content = stackPanel;
                                 button.IsEnabled = false;
                                 WpfMessageBox.Show(
                                     "Code successfully applied to the active editor!",

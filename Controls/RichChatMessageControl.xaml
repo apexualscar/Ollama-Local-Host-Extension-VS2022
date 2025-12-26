@@ -19,6 +19,7 @@
                         Background="{Binding IsUser, Converter={StaticResource BoolToUserColorConverter}}"
                         Margin="0,0,10,0">
                     <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToIconConverter}}"
+                               FontFamily="Segoe MDL2 Assets"
                                Foreground="White"
                                FontSize="12"
                                HorizontalAlignment="Center"
@@ -91,17 +92,20 @@
                                                 Orientation="Horizontal" 
                                                 HorizontalAlignment="Right"
                                                 Margin="8,4">
-                                        <Button Content="?? Copy"
-                                                Padding="8,4"
+                                        <Button Padding="8,4"
                                                 FontSize="10"
                                                 Margin="0,0,4,0"
                                                 ToolTip="Copy code to clipboard"
                                                 Tag="{Binding Code}"
                                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
                                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
-                                                Click="CopyCode_Click"/>
+                                                Click="CopyCode_Click">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8C8;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Copy"/>
+                                            </StackPanel>
+                                        </Button>
                                         <Button x:Name="btnApplyCode"
-                                                Content="? Apply to Editor"
                                                 Padding="8,4"
                                                 FontSize="10"
                                                 ToolTip="Apply this code to the active editor"
@@ -111,7 +115,12 @@
                                                 Click="ApplyCode_Click"
                                                 Visibility="{Binding Path=DataContext.IsApplicable, 
                                                             RelativeSource={RelativeSource AncestorType=UserControl}, 
-                                                            Converter={StaticResource BoolToVisibilityConverter}}"/>
+                                                            Converter={StaticResource BoolToVisibilityConverter}}">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="&#xE8FB;" FontFamily="Segoe MDL2 Assets" Margin="0,0,4,0"/>
+                                                <TextBlock Text="Apply to Editor"/>
+                                            </StackPanel>
+                                        </Button>
                                     </StackPanel>
                                 </Grid>
                             </Border>

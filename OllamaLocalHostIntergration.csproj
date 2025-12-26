@@ -84,6 +84,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="BUILD_FIX_INSTRUCTIONS.md" />
+    <None Include="DARK_MODE_ICON_FIXES_COMPLETE.md" />
     <None Include="DEBUG_FETCH_MODELS.md" />
     <None Include="DEPLOYMENT_PLAN.md" />
     <None Include="diagnose-ollama.ps1" />
@@ -91,6 +92,7 @@
     <None Include="EXTENSION_NOT_DETECTING.md" />
     <None Include="fix-xaml-link.ps1" />
     <None Include="FIX_BUILD_NOW.md" />
+    <None Include="ICON_FIX_ALTERNATIVES.md" />
     <None Include="OLLAMA_TROUBLESHOOTING.md" />
     <None Include="PHASE_1_COMPLETION.md" />
     <None Include="PHASE_1_INTEGRATION_GUIDE.md" />
@@ -101,10 +103,12 @@
     <None Include="PHASE_2_PROGRESS.md" />
     <None Include="PHASE_3_COMPLETE.md" />
     <None Include="PROJECT_COMPLETE.md" />
+    <None Include="QUICK_FIX_SUMMARY.md" />
     <None Include="QUICK_START.md" />
     <None Include="README_UPDATE_SUMMARY.md" />
     <None Include="REMOTE_OLLAMA_SETUP.md" />
     <None Include="REMOTE_SETUP_SUMMARY.md" />
+    <None Include="SEGOE_MDL2_ICON_FIX_COMPLETE.md" />
     <None Include="SETTINGS_FEATURE_COMPLETE.md" />
     <None Include="SETTINGS_IMPLEMENTATION_COMPLETE.md" />
     <None Include="SETTINGS_PERSISTENCE.md" />
@@ -126,7 +130,9 @@
     <None Include="TROUBLESHOOTING_FLOWCHART.md" />
     <None Include="UI_COPILOT_STYLE_UPDATE.md" />
     <None Include="UI_MODEL_DISPLAY_UPDATE.md" />
+    <None Include="UI_QUICK_FIX_SUMMARY.md" />
     <None Include="UI_UPDATE_SUMMARY.md" />
+    <None Include="UI_UX_IMPROVEMENTS_COMPLETE.md" />
     <None Include="UI_VISUAL_COMPARISON.md" />
     <None Include="VERIFICATION.md" />
   </ItemGroup>

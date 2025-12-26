@@ -55,6 +55,7 @@
                                             Background="{Binding IsUser, Converter={StaticResource BoolToUserColorConverter}}"
                                             Margin="0,0,10,0">
                                         <TextBlock Text="{Binding IsUser, Converter={StaticResource BoolToIconConverter}}"
+                                                   FontFamily="Segoe MDL2 Assets"
                                                    Foreground="White"
                                                    FontSize="12"
                                                    HorizontalAlignment="Center"
@@ -102,7 +103,6 @@
                         <ColumnDefinition Width="*"/>
                         <ColumnDefinition Width="Auto"/>
                         <ColumnDefinition Width="Auto"/>
-                        <ColumnDefinition Width="Auto"/>
                     </Grid.ColumnDefinitions>
                     
                     <!-- Mode Dropdown -->
@@ -123,81 +123,47 @@
                         <ComboBoxItem Content="Agent" Tag="Agent"/>
                     </ComboBox>
                     
-                    <!-- Model Dropdown with Enhanced Display -->
-                    <Grid Grid.Column="1" Margin="0,0,8,0">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        
-                        <!-- Model Icon/Label -->
-                        <Border Grid.Column="0"
-                                Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
-                                CornerRadius="3"
-                                Padding="6,4"
-                                Height="32"
-                                VerticalAlignment="Center"
-                                Margin="0,0,4,0">
-                            <TextBlock Text="??"
-                                       FontSize="14"
-                                       VerticalAlignment="Center"
-                                       ToolTip="Active AI Model"/>
-                        </Border>
-                        
-                        <!-- Model ComboBox -->
-                        <ComboBox x:Name="comboModels" 
-                                  Grid.Column="1"
-                                  Height="32"
-                                  FontSize="11"
-                                  VerticalAlignment="Center"
-                                  VerticalContentAlignment="Center"
-                                  Padding="8,4"
-                                  Background="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"
-                                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                  BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"
-                                  SelectionChanged="ComboModels_SelectionChanged">
-                            <ComboBox.ItemTemplate>
-                                <DataTemplate>
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock Text="??" 
-                                                   FontSize="12" 
-                                                   Margin="0,0,6,0"
-                                                   VerticalAlignment="Center"/>
-                                        <TextBlock Text="{Binding}" 
-                                                   FontSize="11"
-                                                   VerticalAlignment="Center"/>
-                                    </StackPanel>
-                                </DataTemplate>
-                            </ComboBox.ItemTemplate>
-                        </ComboBox>
-                    </Grid>
+                    <!-- Model Dropdown (Always Visible) -->
+                    <ComboBox x:Name="comboModels" 
+                              Grid.Column="1"
+                              Height="32"
+                              FontSize="11"
+                              VerticalAlignment="Center"
+                              VerticalContentAlignment="Center"
+                              Margin="0,0,8,0"
+                              Padding="8,4"
+                              Background="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBackgroundKey}}"
+                              Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                              BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"
+                              SelectionChanged="ComboModels_SelectionChanged">
+                        <ComboBox.ItemTemplate>
+                            <DataTemplate>
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="&#xE8AD;" 
+                                               FontFamily="Segoe MDL2 Assets"
+                                               FontSize="12" 
+                                               Margin="0,0,6,0"
+                                               VerticalAlignment="Center"/>
+                                    <TextBlock Text="{Binding}" 
+                                               FontSize="11"
+                                               VerticalAlignment="Center"
+                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                                </StackPanel>
+                            </DataTemplate>
+                        </ComboBox.ItemTemplate>
+                    </ComboBox>
                     
-                    <!-- Refresh Models Button -->
+                    <!-- Settings Button (Smaller) -->
                     <Button Grid.Column="2"
-                            Content="??"
-                            Click="RefreshModelsClick"
-                            Width="32"
-                            Height="32"
-                            Margin="0,0,4,0"
-                            VerticalAlignment="Center"
-                            ToolTip="Refresh models from Ollama server"
-                            FontSize="14"
-                            Padding="0"
-                            VerticalContentAlignment="Center"
-                            HorizontalContentAlignment="Center"
-                            Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
-                    
-                    <!-- Settings Button -->
-                    <Button Grid.Column="3"
                             x:Name="btnSettings"
-                            Content="??"
-                            Width="32"
-                            Height="32"
+                            Content="&#xE713;"
+                            FontFamily="Segoe MDL2 Assets"
+                            Width="28"
+                            Height="28"
                             Margin="0,0,4,0"
                             VerticalAlignment="Center"
                             ToolTip="Settings"
-                            FontSize="14"
+                            FontSize="12"
                             Padding="0"
                             VerticalContentAlignment="Center"
                             HorizontalContentAlignment="Center"
@@ -205,15 +171,16 @@
                             Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"
                             Click="SettingsClick"/>
                     
-                    <!-- Clear Chat Button -->
-                    <Button Grid.Column="4"
-                            Content="???"
+                    <!-- Clear Chat Button (Top Right like Copilot) -->
+                    <Button Grid.Column="3"
+                            Content="&#xE74D;"
+                            FontFamily="Segoe MDL2 Assets"
                             Click="ClearChatClick"
-                            Width="32"
-                            Height="32"
+                            Width="28"
+                            Height="28"
                             VerticalAlignment="Center"
                             ToolTip="Clear chat history"
-                            FontSize="14"
+                            FontSize="12"
                             Padding="0"
                             VerticalContentAlignment="Center"
                             HorizontalContentAlignment="Center"
@@ -243,6 +210,7 @@
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition Width="Auto"/>
                                 <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
                             </Grid.ColumnDefinitions>
                             <TextBlock Grid.Column="0" 
                                        Text="Server:" 
@@ -256,9 +224,24 @@
                                      Height="26"
                                      VerticalContentAlignment="Center"
                                      Padding="6,0"
+                                     Margin="0,0,8,0"
                                      Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                      Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                     CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                      BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
+                            <Button Grid.Column="2"
+                                    Content="&#xE8EF;"
+                                    FontFamily="Segoe MDL2 Assets"
+                                    Click="RefreshModelsClick"
+                                    Width="26"
+                                    Height="26"
+                                    ToolTip="Refresh models"
+                                    FontSize="12"
+                                    Padding="0"
+                                    VerticalContentAlignment="Center"
+                                    HorizontalContentAlignment="Center"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                         </Grid>
                         
                         <!-- Code Context -->
@@ -278,11 +261,11 @@
                                  Padding="6"
                                  Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
                                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                 CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                  BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
                         <TextBlock x:Name="txtTokenCount"
-                                   Text="Tokens: 0 / ~8000"
+                                   Text="Tokens: 0"
                                    FontSize="10"
-                                   Opacity="0.7"
                                    Margin="0,0,0,8"
                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
                         <Button Content="Refresh Context" 
@@ -318,7 +301,8 @@
                                  FontSize="12"
                                  Padding="12,10"
                                  Background="Transparent"
-                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                 CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         
                         <!-- Send Button -->
                         <Button Grid.Row="1"
@@ -365,18 +349,14 @@
                             VerticalAlignment="Center">
                     <TextBlock Text="Model: "
                                FontSize="10"
-                               Opacity="0.6"
+                               Opacity="0.7"
                                Margin="0,0,4,0"
                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                    <Border Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
-                            CornerRadius="3"
-                            Padding="6,2">
-                        <TextBlock x:Name="txtSelectedModel"
-                                   Text="No model selected"
-                                   FontSize="10"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentDarkKey}}"/>
-                    </Border>
+                    <TextBlock x:Name="txtSelectedModel"
+                               Text="No model selected"
+                               FontSize="10"
+                               FontWeight="SemiBold"
+                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
                 </StackPanel>
             </Grid>
         </Border>

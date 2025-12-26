@@ -10,9 +10,10 @@ namespace OllamaLocalHostIntergration.Converters
         {
             if (value is bool isUser)
             {
-                return isUser ? "??" : "??";
+                // Use Segoe MDL2 Assets icon codes
+                return isUser ? "\uE77B" : "\uE8AD";  // Person icon : Robot icon
             }
-            return "?";
+            return "\u25CF";  // Bullet point
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture)
