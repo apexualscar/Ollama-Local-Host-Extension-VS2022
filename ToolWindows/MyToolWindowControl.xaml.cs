@@ -27,7 +27,8 @@ namespace OllamaLocalHostIntergration
         private readonly TemplateService _templateService;
         private ObservableCollection<ChatMessage> _chatMessages;
         private ObservableCollection<FileContextItem> _contextFileItems;
-        private ObservableCollection<Conversation> _savedConversations; // NEW
+        private ObservableCollection<Conversation> _savedConversations;
+        private ObservableCollection<ContextReference> _contextReferences; // NEW
         private Conversation _currentConversation;
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
@@ -49,15 +50,29 @@ namespace OllamaLocalHostIntergration
             _templateService = new TemplateService();
             _chatMessages = new ObservableCollection<ChatMessage>();
             _contextFileItems = new ObservableCollection<FileContextItem>();
-            _savedConversations = new ObservableCollection<Conversation>(); // NEW
+            _savedConversations = new ObservableCollection<Conversation>();
+            _contextReferences = new ObservableCollection<ContextReference>(); // NEW
             
             // Initialize component FIRST to create UI elements
             InitializeComponent();
             
             // Then bind collections to UI elements
             chatMessagesPanel.ItemsSource = _chatMessages;
-            lstContextFiles.ItemsSource = _contextFileItems;
-            comboConversations.ItemsSource = _savedConversations; // NEW
+            // lstContextFiles.ItemsSource = _contextFileItems;  // REMOVED - old system replaced by context references
+            comboConversations.ItemsSource = _savedConversations;
+            contextChipsPanel.ItemsSource = _contextReferences; // Phase 5.5.2 Context References
+
+            // Wire up context chip removal via routed event
+            contextChipsPanel.AddHandler(Controls.ContextChipControl.RemoveContextEvent, new RoutedEventHandler(ContextChip_RemoveContext));
+            
+            // Update summary whenever collection changes
+            _contextReferences.CollectionChanged += (s, e) => UpdateContextSummary();
+
+            // NEW: Phase 5.5.3 - Wire up pending changes
+            _modeManager.OnPendingEditsChanged += UpdatePendingChangesDisplay;
+            pendingChangesItemsControl.AddHandler(Controls.PendingChangeControl.ViewDiffEvent, new RoutedEventHandler(PendingChange_ViewDiff));
+            pendingChangesItemsControl.AddHandler(Controls.PendingChangeControl.KeepChangeEvent, new RoutedEventHandler(PendingChange_Keep));
+            pendingChangesItemsControl.AddHandler(Controls.PendingChangeControl.UndoChangeEvent, new RoutedEventHandler(PendingChange_Undo));
 
             // Initialize current conversation
             _currentConversation = new Conversation
@@ -172,10 +187,28 @@ namespace OllamaLocalHostIntergration
 
         private async void TxtUserInputKeyDown(object sender, KeyEventArgs e)
         {
+            // Phase 5.5.4: Standard chat behavior
+            // ENTER = Send message
+            // SHIFT+ENTER = New line (default TextBox behavior)
             if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
                 e.Handled = true;
                 await SendUserMessage();
+            }
+            // If SHIFT+ENTER, let default behavior add new line (do nothing)
+        }
+
+        /// <summary>
+        /// Handles text changes to show/hide placeholder (Phase 5.5.4)
+        /// </summary>
+        private void TxtUserInput_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Show placeholder only when textbox is empty
+            if (txtPlaceholder != null)
+            {
+                txtPlaceholder.Visibility = string.IsNullOrEmpty(txtUserInput.Text) 
+                    ? Visibility.Visible 
+                    : Visibility.Collapsed;
             }
         }
 
@@ -215,24 +248,30 @@ namespace OllamaLocalHostIntergration
                 // Get system prompt based on current mode
                 string systemPrompt = _modeManager.GetSystemPrompt();
 
-                // Build combined context from active document + multi-file context
-                string codeContext = _currentCodeContext;
+                // Build context from new context references system
+                string codeContext = BuildContextFromReferences();
                 
-                // Add multi-file context if files are selected
-                if (_fileContextService.GetFileCount() > 0)
+                // If no context references, fall back to old system for backward compatibility
+                if (string.IsNullOrEmpty(codeContext))
                 {
-                    string multiFileContext = await _fileContextService.BuildMultiFileContextAsync();
+                    codeContext = _currentCodeContext;
                     
-                    if (!string.IsNullOrEmpty(multiFileContext))
+                    // Add multi-file context if files are selected
+                    if (_fileContextService.GetFileCount() > 0)
                     {
-                        // Combine current document context with multi-file context
-                        if (!string.IsNullOrEmpty(codeContext))
+                        string multiFileContext = await _fileContextService.BuildMultiFileContextAsync();
+                        
+                        if (!string.IsNullOrEmpty(multiFileContext))
                         {
-                            codeContext = $"=== Active Document ===\n{codeContext}\n\n=== Additional Context Files ===\n{multiFileContext}";
-                        }
-                        else
-                        {
-                            codeContext = multiFileContext;
+                            // Combine current document context with multi-file context
+                            if (!string.IsNullOrEmpty(codeContext))
+                            {
+                                codeContext = $"=== Active Document ===\n{codeContext}\n\n=== Additional Context Files ===\n{multiFileContext}";
+                            }
+                            else
+                            {
+                                codeContext = multiFileContext;
+                            }
                         }
                     }
                 }
@@ -457,7 +496,7 @@ namespace OllamaLocalHostIntergration
                 _currentCodeContext = $"Selected {language} code:\n{selectedText}";
             }
 
-            txtCodeContext.Text = _currentCodeContext;
+            // txtCodeContext.Text = _currentCodeContext;  // TEMPORARILY COMMENTED - XAML removed during phase 5.5.2
 
             // Update token count
             UpdateTokenCount();
@@ -470,9 +509,11 @@ namespace OllamaLocalHostIntergration
         {
             // Calculate token count for current context + multi-file context
             int currentContextTokens = _promptBuilder.EstimateTokenCount(_currentCodeContext);
-            int multiFileTokens = _fileContextService.GetTotalTokenCount();
+            int multiFileTokens = _fileContextService.GetFileCount() > 0 ? _fileContextService.GetTotalTokenCount() : 0;
             int totalTokens = currentContextTokens + multiFileTokens;
             
+            // TEMPORARILY COMMENTED - txtTokenCount removed in phase 5.5.2
+            /*
             // Use theme-aware foreground color
             txtTokenCount.Foreground = new System.Windows.Media.SolidColorBrush(
                 System.Windows.Media.Color.FromArgb(
@@ -495,6 +536,7 @@ namespace OllamaLocalHostIntergration
             {
                 txtTokenCount.Text = $"Tokens: ~{totalTokens}";
             }
+            */
         }
 
         private async Task RefreshModelsAsync()
@@ -835,6 +877,8 @@ namespace OllamaLocalHostIntergration
             int fileCount = _fileContextService.GetFileCount();
             int totalTokens = _fileContextService.GetTotalTokenCount();
             
+            // TEMPORARILY COMMENTED - txtContextFilesSummary removed in phase 5.5.2
+            /*
             if (fileCount == 0)
             {
                 txtContextFilesSummary.Text = "No files in context";
@@ -843,6 +887,7 @@ namespace OllamaLocalHostIntergration
             {
                 txtContextFilesSummary.Text = $"{fileCount} file(s), ~{totalTokens} total tokens";
             }
+            */
         }
 
         /// <summary>
@@ -923,5 +968,354 @@ namespace OllamaLocalHostIntergration
                 }
             }
         }
+
+        #region Context References (Phase 5.5.2)
+
+        /// <summary>
+        /// Shows context type picker menu
+        /// </summary>
+        private async void AddContextClick(object sender, RoutedEventArgs e)
+        {
+            var button = sender as Button;
+            var contextMenu = new ContextMenu();
+
+            // File option
+            var fileItem = new MenuItem
+            {
+                Header = "📄 Files",
+                ToolTip = "Add files from solution"
+            };
+            fileItem.Click += async (s, args) => await AddFileContextAsync();
+            contextMenu.Items.Add(fileItem);
+
+            // Selection option
+            var selectionItem = new MenuItem
+            {
+                Header = "📝 Selection",
+                ToolTip = "Add current editor selection"
+            };
+            selectionItem.Click += async (s, args) => await AddSelectionContextAsync();
+            contextMenu.Items.Add(selectionItem);
+
+            // Active Document option
+            var activeDocItem = new MenuItem
+            {
+                Header = "📄 Active Document",
+                ToolTip = "Add currently open document"
+            };
+            activeDocItem.Click += async (s, args) => await AddActiveDocumentContextAsync();
+            contextMenu.Items.Add(activeDocItem);
+
+            contextMenu.PlacementTarget = button;
+            contextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            contextMenu.IsOpen = true;
+        }
+
+        /// <summary>
+        /// Adds file(s) to context
+        /// </summary>
+        private async Task AddFileContextAsync()
+        {
+            try
+            {
+                var dialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Title = "Select File(s) for Context",
+                    Filter = "Code Files|*.cs;*.vb;*.fs;*.cpp;*.h;*.hpp;*.c;*.java;*.py;*.js;*.ts;*.xml;*.xaml;*.json|All Files|*.*",
+                    Multiselect = true
+                };
+
+                if (dialog.ShowDialog() == true)
+                {
+                    foreach (var filePath in dialog.FileNames)
+                    {
+                        await AddFileToContextAsync(filePath);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error adding file: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Adds a specific file to context references
+        /// </summary>
+        private async Task AddFileToContextAsync(string filePath)
+        {
+            try
+            {
+                var content = System.IO.File.ReadAllText(filePath);  // .NET 4.8 doesn't have ReadAllTextAsync
+                var fileName = System.IO.Path.GetFileName(filePath);
+                var tokenCount = _promptBuilder.EstimateTokenCount(content);
+
+                var contextRef = new ContextReference
+                {
+                    Type = ContextReferenceType.File,
+                    DisplayText = fileName,
+                    FilePath = filePath,
+                    Content = content,
+                    TokenCount = tokenCount
+                };
+
+                _contextReferences.Add(contextRef);
+                UpdateContextSummary();
+                txtStatusBar.Text = $"Added {fileName} to context";
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error reading file: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Adds current editor selection to context
+        /// </summary>
+        private async Task AddSelectionContextAsync()
+        {
+            try
+            {
+                var selectedText = await _codeEditorService.GetSelectedTextAsync();
+                if (string.IsNullOrWhiteSpace(selectedText))
+                {
+                    txtStatusBar.Text = "No text selected";
+                    return;
+                }
+
+                var language = await _codeEditorService.GetActiveDocumentLanguageAsync();
+                var tokenCount = _promptBuilder.EstimateTokenCount(selectedText);
+
+                var contextRef = new ContextReference
+                {
+                    Type = ContextReferenceType.Selection,
+                    DisplayText = $"Selection ({selectedText.Length} chars)",
+                    Content = selectedText,
+                    TokenCount = tokenCount
+                };
+
+                _contextReferences.Add(contextRef);
+                UpdateContextSummary();
+                txtStatusBar.Text = "Added selection to context";
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error adding selection: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Adds active document to context
+        /// </summary>
+        private async Task AddActiveDocumentContextAsync()
+        {
+            try
+            {
+                var documentText = await _codeEditorService.GetActiveDocumentTextAsync();
+                if (string.IsNullOrWhiteSpace(documentText))
+                {
+                    txtStatusBar.Text = "No active document";
+                    return;
+                }
+
+                var documentPath = await _codeEditorService.GetActiveDocumentPathAsync();
+                var documentName = System.IO.Path.GetFileName(documentPath) ?? "Active Document";
+                var tokenCount = _promptBuilder.EstimateTokenCount(documentText);
+
+                var contextRef = new ContextReference
+                {
+                    Type = ContextReferenceType.File,
+                    DisplayText = documentName,
+                    FilePath = documentPath,
+                    Content = documentText,
+                    TokenCount = tokenCount
+                };
+
+                _contextReferences.Add(contextRef);
+                UpdateContextSummary();
+                txtStatusBar.Text = $"Added {contextRef.DisplayText} to context";
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error adding document: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Updates context summary text
+        /// </summary>
+        private void UpdateContextSummary()
+        {
+            if (_contextReferences.Count == 0)
+            {
+                txtContextSummary.Text = "No context added";
+            }
+            else
+            {
+                int totalTokens = _contextReferences.Sum(c => c.TokenCount);
+                txtContextSummary.Text = $"{_contextReferences.Count} item(s), ~{totalTokens} tokens";
+            }
+        }
+
+        /// <summary>
+        /// Builds context prompt from all references
+        /// </summary>
+        private string BuildContextFromReferences()
+        {
+            if (_contextReferences.Count == 0)
+                return string.Empty;
+
+            var context = new System.Text.StringBuilder();
+            context.AppendLine("=== Context References ===");
+            context.AppendLine();
+
+            foreach (var reference in _contextReferences)
+            {
+                context.AppendLine($"### {reference.Type}: {reference.DisplayText}");
+                context.AppendLine("```");
+                context.AppendLine(reference.Content);
+                context.AppendLine("```");
+                context.AppendLine();
+            }
+
+            return context.ToString();
+        }
+
+        /// <summary>
+        /// Handles removal of a context chip (routed event)
+        /// </summary>
+        private void ContextChip_RemoveContext(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is ContextReference contextRef)
+            {
+                _contextReferences.Remove(contextRef);
+                txtStatusBar.Text = $"Removed {contextRef.DisplayText} from context";
+            }
+        }
+
+        #endregion
+
+        #region Pending Changes (Phase 5.5.3)
+
+        /// <summary>
+        /// Updates pending changes display
+        /// </summary>
+        private void UpdatePendingChangesDisplay()
+        {
+            Dispatcher.Invoke(() =>
+            {
+                var pendingEdits = _modeManager.PendingEdits.ToList();
+                var count = pendingEdits.Count;
+                
+                if (count == 0)
+                {
+                    pendingChangesPanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    pendingChangesPanel.Visibility = Visibility.Visible;
+                    txtPendingChangesCount.Text = count == 1 
+                        ? "1 change pending" 
+                        : $"{count} changes pending";
+                    
+                    // Bind to observable collection for display
+                    pendingChangesItemsControl.ItemsSource = pendingEdits;
+                }
+            });
+        }
+
+        /// <summary>
+        /// Handles View Diff routed event
+        /// </summary>
+        private async void PendingChange_ViewDiff(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is CodeEdit codeEdit)
+            {
+                try
+                {
+                    var dialog = new Dialogs.DiffPreviewDialog(codeEdit);
+                    dialog.ShowDialog();
+                }
+                catch (Exception ex)
+                {
+                    txtStatusBar.Text = $"Failed to show diff: {ex.Message}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles Keep Change routed event
+        /// </summary>
+        private async void PendingChange_Keep(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is CodeEdit codeEdit)
+            {
+                try
+                {
+                    await _codeModService.ApplyCodeEditAsync(codeEdit);
+                    _modeManager.RemovePendingEdit(codeEdit);
+                    _modeManager.MarkEditApplied(codeEdit);
+                    txtStatusBar.Text = $"Applied change to {System.IO.Path.GetFileName(codeEdit.FilePath)}";
+                }
+                catch (Exception ex)
+                {
+                    txtStatusBar.Text = $"Failed to apply change: {ex.Message}";
+                }
+            }
+        }
+
+        /// <summary>
+        /// Handles Undo Change routed event
+        /// </summary>
+        private void PendingChange_Undo(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is CodeEdit codeEdit)
+            {
+                _modeManager.RemovePendingEdit(codeEdit);
+                txtStatusBar.Text = $"Discarded change to {System.IO.Path.GetFileName(codeEdit.FilePath)}";
+            }
+        }
+
+        /// <summary>
+        /// Keeps all pending changes
+        /// </summary>
+        private async void KeepAllChangesClick(object sender, RoutedEventArgs e)
+        {
+            var edits = _modeManager.PendingEdits.ToList();
+            int successCount = 0;
+            
+            foreach (var edit in edits)
+            {
+                try
+                {
+                    await _codeModService.ApplyCodeEditAsync(edit);
+                    _modeManager.RemovePendingEdit(edit);
+                    _modeManager.MarkEditApplied(edit);
+                    successCount++;
+                }
+                catch (Exception ex)
+                {
+                    txtStatusBar.Text = $"Failed to apply change: {ex.Message}";
+                    break;
+                }
+            }
+            
+            if (successCount == edits.Count)
+            {
+                txtStatusBar.Text = $"Applied {successCount} change(s) successfully";
+            }
+        }
+
+        /// <summary>
+        /// Undoes all pending changes
+        /// </summary>
+        private void UndoAllChangesClick(object sender, RoutedEventArgs e)
+        {
+            int count = _modeManager.PendingEdits.Count;
+            _modeManager.ClearPendingEdits();
+            txtStatusBar.Text = $"Discarded {count} pending change(s)";
+        }
+
+        #endregion
     }
 }

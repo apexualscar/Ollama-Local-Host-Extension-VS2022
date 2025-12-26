@@ -25,7 +25,7 @@
     
     <Grid>
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto"/> <!-- NEW: Conversation Header -->
+            <RowDefinition Height="Auto"/> <!-- Conversation Header -->
             <RowDefinition Height="*"/>    <!-- Chat Area -->
             <RowDefinition Height="Auto"/> <!-- Input Area -->
             <RowDefinition Height="Auto"/> <!-- Status Bar -->
@@ -138,6 +138,7 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/> <!-- NEW: Context References -->
                 </Grid.RowDefinitions>
                 
                 <!-- Toolbar with Mode, Model, and Settings -->
@@ -270,110 +271,169 @@
                                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                         </Grid>
                         
-                        <!-- Context Files Section -->
-                        <TextBlock Text="Context Files:" 
-                                   FontSize="11" 
-                                   Margin="0,4,0,4"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                        <ListBox x:Name="lstContextFiles"
-                                 Height="80"
-                                 Margin="0,0,0,4"
-                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}">
-                            <ListBox.ItemTemplate>
-                                <DataTemplate>
-                                    <Grid Margin="0,2">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="*"/>
-                                            <ColumnDefinition Width="Auto"/>
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock Grid.Column="0"
-                                                   Text="{Binding DisplayText}"
-                                                   FontSize="10"
-                                                   VerticalAlignment="Center"
-                                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                                        <Button Grid.Column="1"
-                                                Content="&#x00D7;"
-                                                Width="18"
-                                                Height="18"
-                                                FontSize="14"
-                                                Padding="0"
-                                                Margin="4,0,0,0"
-                                                ToolTip="Remove file"
-                                                Click="RemoveContextFileClick"
-                                                Tag="{Binding FilePath}"
-                                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
-                                    </Grid>
-                                </DataTemplate>
-                            </ListBox.ItemTemplate>
-                        </ListBox>
-                        <Grid Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            <Button Grid.Column="0"
-                                    Content="+ Add File"
-                                    Click="AddContextFileClick"
-                                    FontSize="10"
-                                    Padding="6,4"
-                                    HorizontalAlignment="Left"
-                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
-                            <Button Grid.Column="1"
-                                    Content="Clear All"
-                                    Click="ClearContextFilesClick"
-                                    FontSize="10"
-                                    Padding="6,4"
-                                    Margin="4,0,0,0"
-                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
-                        </Grid>
-                        <TextBlock x:Name="txtContextFilesSummary"
-                                   Text="No files in context"
+                        <TextBlock Text="Context management has moved above the input box"
                                    FontSize="10"
-                                   Margin="0,0,0,8"
+                                   FontStyle="Italic"
+                                   Opacity="0.7"
+                                   TextWrapping="Wrap"
                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                        
-                        <!-- Code Context -->
-                        <TextBlock Text="Active Document Context:" 
-                                   FontSize="11" 
-                                   Margin="0,0,0,4"
-                                   FontWeight="SemiBold"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                        <TextBox x:Name="txtCodeContext" 
-                                 IsReadOnly="True" 
-                                 TextWrapping="Wrap" 
-                                 VerticalScrollBarVisibility="Auto" 
-                                 Height="60" 
-                                 FontFamily="Consolas" 
-                                 FontSize="10"
-                                 Margin="0,0,0,4"
-                                 Padding="6"
-                                 Background="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"
-                                 Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                 CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                 BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.ComboBoxBorderKey}}"/>
-                        <TextBlock x:Name="txtTokenCount"
-                                   Text="Tokens: 0"
-                                   FontSize="10"
-                                   Margin="0,0,0,8"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                        <Button Content="Refresh Context" 
-                                Click="RefreshContextClick"
-                                HorizontalAlignment="Left"
-                                Padding="10,6"
-                                FontSize="11"
-                                Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                                Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                     </StackPanel>
                 </Border>
                 
-                <!-- Input TextBox -->
+                
+                <!-- NEW: Context References Section -->
                 <Border Grid.Row="2"
+                        x:Name="contextReferencesPanel"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header with Add Button -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <TextBlock Grid.Column="0"
+                                       Text="Context:"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,8,0"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                            
+
+                            <TextBlock Grid.Column="1"
+                                       x:Name="txtContextSummary"
+                                       Text="No context added"
+                                       FontSize="10"
+                                       VerticalAlignment="Center"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                            
+                            <Button Grid.Column="2"
+                                    Content="+ Add Context"
+                                    Click="AddContextClick"
+                                    FontSize="10"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                        </Grid>
+                        
+                        <!-- Context Chips -->
+                        <ItemsControl Grid.Row="1"
+                                      x:Name="contextChipsPanel">
+                            <ItemsControl.ItemsPanel>
+                                <ItemsPanelTemplate>
+                                    <WrapPanel Orientation="Horizontal"/>
+                                </ItemsPanelTemplate>
+                            </ItemsControl.ItemsPanel>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:ContextChipControl DataContext="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+                
+                <!-- NEW: Pending Changes Section (Phase 5.5.3) -->
+                <Border Grid.Row="3"
+                        x:Name="pendingChangesPanel"
+                        Visibility="Collapsed"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1"
+                        CornerRadius="4"
+                        Padding="10"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+                        
+                        <!-- Header with Actions -->
+                        <Grid Grid.Row="0" Margin="0,0,0,8">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Icon -->
+                            <TextBlock Grid.Column="0"
+                                       Text="&#xE70F;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="12"
+                                       Margin="0,0,6,0"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            
+                            <!-- Count -->
+                            <TextBlock Grid.Column="1"
+                                       x:Name="txtPendingChangesCount"
+                                       Text="0 changes pending"
+                                       FontSize="11"
+                                       FontWeight="SemiBold"
+                                       VerticalAlignment="Center"
+                                       Margin="0,0,12,0"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            
+                            <!-- Spacer -->
+                            <Border Grid.Column="2"/>
+                            
+                            <!-- Keep All Button -->
+                            <Button Grid.Column="3"
+                                    Content="Keep All"
+                                    Click="KeepAllChangesClick"
+                                    FontSize="10"
+                                    Padding="8,4"
+                                    Margin="0,0,4,0"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Apply all pending changes"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"
+                                    Foreground="White"/>
+                            
+                            <!-- Undo All Button -->
+                            <Button Grid.Column="4"
+                                    Content="Undo All"
+                                    Click="UndoAllChangesClick"
+                                    FontSize="10"
+                                    Padding="8,4"
+                                    VerticalAlignment="Center"
+                                    ToolTip="Discard all pending changes"
+                                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
+                                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                        </Grid>
+                        
+                        <!-- Pending Changes List -->
+                        <ItemsControl Grid.Row="1"
+                                      x:Name="pendingChangesItemsControl">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <controls:PendingChangeControl DataContext="{Binding}"/>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </Grid>
+                </Border>
+                
+                <!-- Input TextBox -->
+                <Border Grid.Row="4"
                         BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
                         BorderThickness="1"
                         CornerRadius="6"
@@ -383,6 +443,16 @@
                             <RowDefinition Height="*"/>
                             <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
+                        
+                        <!-- Placeholder Text (Phase 5.5.4) -->
+                        <TextBlock Grid.Row="0"
+                                   x:Name="txtPlaceholder"
+                                   Text="Ask a question or describe what you want to build..."
+                                   FontSize="12"
+                                   Padding="12,10"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.GrayTextKey}}"
+                                   IsHitTestVisible="False"
+                                   VerticalAlignment="Top"/>
                         
                         <TextBox x:Name="txtUserInput" 
                                  Grid.Row="0"
@@ -396,7 +466,8 @@
                                  Padding="12,10"
                                  Background="Transparent"
                                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
-                                 CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                                 CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
+                                 TextChanged="TxtUserInput_TextChanged"/>
                         
                         <!-- Send Button -->
                         <Button Grid.Row="1"

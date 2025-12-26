@@ -29,6 +29,7 @@ namespace OllamaLocalHostIntergration.Services
         public IReadOnlyList<CodeEdit> PendingEdits => _pendingEdits.AsReadOnly();
 
         public event Action<InteractionMode> OnModeChanged;
+        public event Action OnPendingEditsChanged; // NEW: Phase 5.5.3 - Notify UI when pending edits change
 
         public ModeManager()
         {
@@ -54,17 +55,20 @@ namespace OllamaLocalHostIntergration.Services
             if (edit != null)
             {
                 _pendingEdits.Add(edit);
+                OnPendingEditsChanged?.Invoke(); // Notify listeners
             }
         }
 
         public void RemovePendingEdit(CodeEdit edit)
         {
             _pendingEdits.Remove(edit);
+            OnPendingEditsChanged?.Invoke(); // Notify listeners
         }
 
         public void ClearPendingEdits()
         {
             _pendingEdits.Clear();
+            OnPendingEditsChanged?.Invoke(); // Notify listeners
         }
 
         public void MarkEditApplied(CodeEdit edit)
