@@ -62,6 +62,9 @@
     <Compile Include="Converters\BoolToRoleConverter.cs" />
     <Compile Include="Converters\BoolToUserColorConverter.cs" />
     <Compile Include="Converters\BoolToVisibilityConverter.cs" />
+    <Compile Include="Dialogs\ContextSearchDialog.xaml.cs">
+      <DependentUpon>ContextSearchDialog.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Dialogs\DiffPreviewDialog.xaml.cs">
       <DependentUpon>DiffPreviewDialog.xaml</DependentUpon>
     </Compile>
@@ -77,6 +80,7 @@
     <Compile Include="OllamaLocalHostIntergrationPackage.cs" />
     <Compile Include="Services\CodeEditorService.cs" />
     <Compile Include="Services\CodeModificationService.cs" />
+    <Compile Include="Services\CodeSearchService.cs" />
     <Compile Include="Services\ConversationHistoryService.cs" />
     <Compile Include="Services\FileContextService.cs" />
     <Compile Include="Services\MessageParserService.cs" />
@@ -136,6 +140,9 @@
     <None Include="docs\PHASE_5_5_4_COMPLETE.md" />
     <None Include="docs\PHASE_5_5_7_QUICK_REF.md" />
     <None Include="docs\PHASE_5_5_COMPLETE.md" />
+    <None Include="docs\PHASE_5_6_COMPLETE.md" />
+    <None Include="docs\PHASE_5_6_PROPER_COMPLETE.md" />
+    <None Include="docs\PHASE_5_6_SUMMARY.md" />
     <None Include="docs\PHASE_5_ALL_COMPLETE.md" />
     <None Include="docs\PHASE_5_FIX_PLAN.md" />
     <None Include="docs\START_HERE_FIXES.md" />
@@ -210,6 +217,9 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Controls\RichChatMessageControl.xaml">
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Dialogs\ContextSearchDialog.xaml">
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Dialogs\DiffPreviewDialog.xaml">

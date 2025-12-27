@@ -972,71 +972,69 @@ namespace OllamaLocalHostIntergration
         #region Context References (Phase 5.5.2)
 
         /// <summary>
-        /// Shows context type picker menu
+        /// Shows context search dialog (Phase 5.6 - Copilot-style)
         /// </summary>
         private async void AddContextClick(object sender, RoutedEventArgs e)
         {
-            var button = sender as Button;
-            var contextMenu = new ContextMenu();
-
-            // File option
-            var fileItem = new MenuItem
-            {
-                Header = "📄 Files",
-                ToolTip = "Add files from solution"
-            };
-            fileItem.Click += async (s, args) => await AddFileContextAsync();
-            contextMenu.Items.Add(fileItem);
-
-            // Selection option
-            var selectionItem = new MenuItem
-            {
-                Header = "📝 Selection",
-                ToolTip = "Add current editor selection"
-            };
-            selectionItem.Click += async (s, args) => await AddSelectionContextAsync();
-            contextMenu.Items.Add(selectionItem);
-
-            // Active Document option
-            var activeDocItem = new MenuItem
-            {
-                Header = "📄 Active Document",
-                ToolTip = "Add currently open document"
-            };
-            activeDocItem.Click += async (s, args) => await AddActiveDocumentContextAsync();
-            contextMenu.Items.Add(activeDocItem);
-
-            contextMenu.PlacementTarget = button;
-            contextMenu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
-            contextMenu.IsOpen = true;
-        }
-
-        /// <summary>
-        /// Adds file(s) to context
-        /// </summary>
-        private async Task AddFileContextAsync()
-        {
             try
             {
-                var dialog = new Microsoft.Win32.OpenFileDialog
+                // Create and show search dialog
+                var dialog = new Dialogs.ContextSearchDialog();
+                
+                // Subscribe to context selected event
+                dialog.ContextSelected += async (s, contextRef) =>
                 {
-                    Title = "Select File(s) for Context",
-                    Filter = "Code Files|*.cs;*.vb;*.fs;*.cpp;*.h;*.hpp;*.c;*.java;*.py;*.js;*.ts;*.xml;*.xaml;*.json|All Files|*.*",
-                    Multiselect = true
+                    // Handle special cases (active document, selection)
+                    if (contextRef.DisplayText == "Active Document")
+                    {
+                        await AddActiveDocumentContextAsync();
+                    }
+                    else if (contextRef.DisplayText == "Selection")
+                    {
+                        await AddSelectionContextAsync();
+                    }
+                    else
+                    {
+                        // Add the selected context reference
+                        _contextReferences.Add(contextRef);
+                        UpdateContextSummary();
+                        txtStatusBar.Text = $"Added {contextRef.DisplayText} to context";
+                    }
+                    
+                    // Close the dialog window
+                    var window = System.Windows.Window.GetWindow(dialog);
+                    window?.Close();
                 };
 
-                if (dialog.ShowDialog() == true)
+                // Show dialog in a window
+                var window = new System.Windows.Window
                 {
-                    foreach (var filePath in dialog.FileNames)
-                    {
-                        await AddFileToContextAsync(filePath);
-                    }
-                }
+                    Content = dialog,
+                    Title = "Add Context",
+                    Width = 600,
+                    Height = 500,
+                    WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
+                    Owner = System.Windows.Window.GetWindow(this),
+                    ResizeMode = System.Windows.ResizeMode.CanResize,
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent),
+                    WindowStyle = System.Windows.WindowStyle.ToolWindow
+                };
+                
+                window.ShowDialog();
             }
             catch (Exception ex)
             {
-                txtStatusBar.Text = $"Error adding file: {ex.Message}";
+                txtStatusBar.Text = $"Error opening context search: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// Adds file(s) to context - DEPRECATED, replaced by unified search dialog
+        /// </summary>
+        private async Task AddFileContextAsync()
+        {
+            // This method is now handled by the unified search dialog
+            // Keeping for backward compatibility but not used
         }
 
         /// <summary>
@@ -1046,7 +1044,7 @@ namespace OllamaLocalHostIntergration
         {
             try
             {
-                var content = System.IO.File.ReadAllText(filePath);  // .NET 4.8 doesn't have ReadAllTextAsync
+                var content = System.IO.File.ReadAllText(filePath);
                 var fileName = System.IO.Path.GetFileName(filePath);
                 var tokenCount = _promptBuilder.EstimateTokenCount(content);
 
