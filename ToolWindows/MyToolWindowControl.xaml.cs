@@ -25,6 +25,8 @@ namespace OllamaLocalHostIntergration
         private readonly ConversationHistoryService _conversationHistory;
         private readonly FileContextService _fileContextService;
         private readonly TemplateService _templateService;
+        private readonly VSDiffService _vsDiffService; // Phase 5.7
+        private readonly ChangePersistenceService _changePersistence; // Phase 5.7
         private ObservableCollection<ChatMessage> _chatMessages;
         private ObservableCollection<FileContextItem> _contextFileItems;
         private ObservableCollection<Conversation> _savedConversations;
@@ -48,6 +50,8 @@ namespace OllamaLocalHostIntergration
             _conversationHistory = new ConversationHistoryService();
             _fileContextService = new FileContextService();
             _templateService = new TemplateService();
+            _vsDiffService = new VSDiffService(); // Phase 5.7
+            _changePersistence = new ChangePersistenceService(); // Phase 5.7
             _chatMessages = new ObservableCollection<ChatMessage>();
             _contextFileItems = new ObservableCollection<FileContextItem>();
             _savedConversations = new ObservableCollection<Conversation>();
@@ -108,6 +112,8 @@ namespace OllamaLocalHostIntergration
             _ = RefreshModelsAsync();
             // Load saved conversations
             _ = LoadSavedConversationsAsync();
+            // Phase 5.7: Load saved pending changes
+            _ = LoadSavedPendingChangesAsync();
         }
 
         private void TxtServerAddress_LostFocus(object sender, RoutedEventArgs e)
@@ -1193,7 +1199,53 @@ namespace OllamaLocalHostIntergration
 
         #endregion
 
-        #region Pending Changes (Phase 5.5.3)
+        #region Pending Changes (Phase 5.5.3 + 5.7)
+
+        /// <summary>
+        /// Load saved pending changes on startup (Phase 5.7)
+        /// </summary>
+        private async Task LoadSavedPendingChangesAsync()
+        {
+            try
+            {
+                if (_changePersistence.HasPendingChanges())
+                {
+                    var savedChanges = await _changePersistence.LoadPendingChangesAsync();
+                    
+                    foreach (var change in savedChanges)
+                    {
+                        if (!change.Applied)
+                        {
+                            _modeManager.AddPendingEdit(change);
+                        }
+                    }
+                    
+                    if (savedChanges.Any(c => !c.Applied))
+                    {
+                        txtStatusBar.Text = $"Restored {savedChanges.Count(c => !c.Applied)} pending change(s) from previous session";
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to load pending changes: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Save pending changes (Phase 5.7)
+        /// </summary>
+        private async Task SavePendingChangesAsync()
+        {
+            try
+            {
+                await _changePersistence.SavePendingChangesAsync(_modeManager.PendingEdits);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save pending changes: {ex.Message}");
+            }
+        }
 
         /// <summary>
         /// Updates pending changes display
@@ -1219,11 +1271,14 @@ namespace OllamaLocalHostIntergration
                     // Bind to observable collection for display
                     pendingChangesItemsControl.ItemsSource = pendingEdits;
                 }
+                
+                // Phase 5.7: Auto-save pending changes
+                _ = SavePendingChangesAsync();
             });
         }
 
         /// <summary>
-        /// Handles View Diff routed event
+        /// Handles View Diff routed event (Phase 5.7: Enhanced with VS diff)
         /// </summary>
         private async void PendingChange_ViewDiff(object sender, RoutedEventArgs e)
         {
@@ -1231,8 +1286,11 @@ namespace OllamaLocalHostIntergration
             {
                 try
                 {
-                    var dialog = new Dialogs.DiffPreviewDialog(codeEdit);
-                    dialog.ShowDialog();
+                    // Phase 5.7: Try to use VS diff service first
+                    await _vsDiffService.ShowDiffAsync(codeEdit);
+                    codeEdit.DiffWindowOpen = true;
+                    
+                    txtStatusBar.Text = $"Showing diff for {System.IO.Path.GetFileName(codeEdit.FilePath)}";
                 }
                 catch (Exception ex)
                 {
@@ -1242,7 +1300,7 @@ namespace OllamaLocalHostIntergration
         }
 
         /// <summary>
-        /// Handles Keep Change routed event
+        /// Handles Keep Change routed event (Phase 5.7: Enhanced with cleanup)
         /// </summary>
         private async void PendingChange_Keep(object sender, RoutedEventArgs e)
         {
@@ -1250,9 +1308,21 @@ namespace OllamaLocalHostIntergration
             {
                 try
                 {
+                    // Apply the change
                     await _codeModService.ApplyCodeEditAsync(codeEdit);
-                    _modeManager.RemovePendingEdit(codeEdit);
+                    
+                    // Mark as applied
                     _modeManager.MarkEditApplied(codeEdit);
+                    
+                    // Remove from pending
+                    _modeManager.RemovePendingEdit(codeEdit);
+                    
+                    // Phase 5.7: Cleanup temp files
+                    _vsDiffService.CleanupTempFiles(codeEdit);
+                    
+                    // Phase 5.7: Remove from persistence
+                    await _changePersistence.RemoveSingleChangeAsync(codeEdit);
+                    
                     txtStatusBar.Text = $"Applied change to {System.IO.Path.GetFileName(codeEdit.FilePath)}";
                 }
                 catch (Exception ex)
@@ -1263,24 +1333,33 @@ namespace OllamaLocalHostIntergration
         }
 
         /// <summary>
-        /// Handles Undo Change routed event
+        /// Handles Undo Change routed event (Phase 5.7: Enhanced with cleanup)
         /// </summary>
         private void PendingChange_Undo(object sender, RoutedEventArgs e)
         {
             if (e.OriginalSource is CodeEdit codeEdit)
             {
+                // Remove from pending
                 _modeManager.RemovePendingEdit(codeEdit);
+                
+                // Phase 5.7: Cleanup temp files
+                _vsDiffService.CleanupTempFiles(codeEdit);
+                
+                // Phase 5.7: Remove from persistence
+                _ = _changePersistence.RemoveSingleChangeAsync(codeEdit);
+                
                 txtStatusBar.Text = $"Discarded change to {System.IO.Path.GetFileName(codeEdit.FilePath)}";
             }
         }
 
         /// <summary>
-        /// Keeps all pending changes
+        /// Keeps all pending changes (Phase 5.7: Enhanced with better error handling)
         /// </summary>
         private async void KeepAllChangesClick(object sender, RoutedEventArgs e)
         {
             var edits = _modeManager.PendingEdits.ToList();
             int successCount = 0;
+            int failedCount = 0;
             
             foreach (var edit in edits)
             {
@@ -1289,28 +1368,50 @@ namespace OllamaLocalHostIntergration
                     await _codeModService.ApplyCodeEditAsync(edit);
                     _modeManager.RemovePendingEdit(edit);
                     _modeManager.MarkEditApplied(edit);
+                    
+                    // Phase 5.7: Cleanup
+                    _vsDiffService.CleanupTempFiles(edit);
+                    
                     successCount++;
                 }
                 catch (Exception ex)
                 {
-                    txtStatusBar.Text = $"Failed to apply change: {ex.Message}";
-                    break;
+                    failedCount++;
+                    System.Diagnostics.Debug.WriteLine($"Failed to apply change: {ex.Message}");
                 }
             }
             
-            if (successCount == edits.Count)
+            // Phase 5.7: Clear all from persistence
+            await _changePersistence.ClearPendingChangesAsync();
+            
+            if (failedCount == 0)
             {
                 txtStatusBar.Text = $"Applied {successCount} change(s) successfully";
+            }
+            else
+            {
+                txtStatusBar.Text = $"Applied {successCount}, failed {failedCount} change(s)";
             }
         }
 
         /// <summary>
-        /// Undoes all pending changes
+        /// Undoes all pending changes (Phase 5.7: Enhanced with cleanup)
         /// </summary>
-        private void UndoAllChangesClick(object sender, RoutedEventArgs e)
+        private async void UndoAllChangesClick(object sender, RoutedEventArgs e)
         {
             int count = _modeManager.PendingEdits.Count;
+            
+            // Phase 5.7: Cleanup temp files for all edits
+            foreach (var edit in _modeManager.PendingEdits.ToList())
+            {
+                _vsDiffService.CleanupTempFiles(edit);
+            }
+            
             _modeManager.ClearPendingEdits();
+            
+            // Phase 5.7: Clear from persistence
+            await _changePersistence.ClearPendingChangesAsync();
+            
             txtStatusBar.Text = $"Discarded {count} pending change(s)";
         }
 

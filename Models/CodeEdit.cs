@@ -15,11 +15,17 @@ namespace OllamaLocalHostIntergration.Models
         public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
         public bool Applied { get; set; }
+        
+        // Phase 5.7: VS Diff integration
+        public string TempOriginalPath { get; set; }
+        public string TempModifiedPath { get; set; }
+        public bool DiffWindowOpen { get; set; }
 
         public CodeEdit()
         {
             CreatedAt = DateTime.Now;
             Applied = false;
+            DiffWindowOpen = false;
         }
 
         public CodeEdit(string filePath, string originalCode, string modifiedCode, string description = "")
@@ -30,6 +36,7 @@ namespace OllamaLocalHostIntergration.Models
             Description = description;
             CreatedAt = DateTime.Now;
             Applied = false;
+            DiffWindowOpen = false;
         }
     }
 }

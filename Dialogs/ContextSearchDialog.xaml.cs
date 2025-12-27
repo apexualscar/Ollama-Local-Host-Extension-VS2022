@@ -87,7 +87,20 @@ namespace OllamaLocalHostIntergration.Dialogs
             }
 
             // Debounce search
-            await Task.Delay(300, token);
+            try
+            {
+                await Task.Delay(300, token);
+            }
+            catch (System.Threading.Tasks.TaskCanceledException)
+            {
+                // Expected when user types quickly - exit gracefully
+                return;
+            }
+            catch (System.OperationCanceledException)
+            {
+                // Also handle OperationCanceledException
+                return;
+            }
             
             if (token.IsCancellationRequested)
                 return;

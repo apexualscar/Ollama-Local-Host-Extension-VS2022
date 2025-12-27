@@ -98,7 +98,8 @@ namespace OllamaLocalHostIntergration.Services
                     {
                         try
                         {
-                            GetProjectFiles(project, results);
+                            // CHANGED: Use search without filter to get files AND code elements
+                            SearchProject(project, string.Empty, results);
                         }
                         catch { }
                     }
@@ -118,8 +119,9 @@ namespace OllamaLocalHostIntergration.Services
             if (project == null || project.ProjectItems == null)
                 return;
 
-            // Check project name
-            if (project.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+            // Check project name - if searchTerm is empty, skip this check
+            if (!string.IsNullOrEmpty(searchTerm) && 
+                project.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
             {
                 results.Add(new SearchResult
                 {
@@ -148,19 +150,19 @@ namespace OllamaLocalHostIntergration.Services
                 try
                 {
                     // Check file name
-                    if (item.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+                    var filePath = GetItemPath(item);
+                    bool matchesSearch = string.IsNullOrEmpty(searchTerm) || 
+                                       item.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
+                    
+                    if (matchesSearch && !string.IsNullOrEmpty(filePath) && IsCodeFile(filePath))
                     {
-                        var filePath = GetItemPath(item);
-                        if (!string.IsNullOrEmpty(filePath))
+                        results.Add(new SearchResult
                         {
-                            results.Add(new SearchResult
-                            {
-                                DisplayName = item.Name,
-                                FilePath = filePath,
-                                ProjectName = projectName,
-                                Type = SearchResultType.File
-                            });
-                        }
+                            DisplayName = item.Name,
+                            FilePath = filePath,
+                            ProjectName = projectName,
+                            Type = SearchResultType.File
+                        });
                     }
 
                     // Search code elements within file
@@ -180,7 +182,7 @@ namespace OllamaLocalHostIntergration.Services
         }
 
         /// <summary>
-        /// Get all files from a project
+        /// Get all files in solution
         /// </summary>
         private void GetProjectFiles(DteProject project, List<SearchResult> results)
         {
@@ -242,8 +244,11 @@ namespace OllamaLocalHostIntergration.Services
             {
                 try
                 {
-                    // Check element name
-                    if (element.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0)
+                    // Check element name - if searchTerm is empty, include all elements
+                    bool matchesSearch = string.IsNullOrEmpty(searchTerm) || 
+                                       element.Name.IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase) >= 0;
+                    
+                    if (matchesSearch)
                     {
                         var result = new SearchResult
                         {
