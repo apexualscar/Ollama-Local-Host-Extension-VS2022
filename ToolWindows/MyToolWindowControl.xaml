@@ -21,6 +21,15 @@
         <converters:BoolToIconConverter x:Key="BoolToIconConverter"/>
         <converters:BoolToUserColorConverter x:Key="BoolToUserColorConverter"/>
         <converters:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter"/>
+        
+        <!-- Phase 6.1+: Spinning Loading Animation -->
+        <Storyboard x:Key="SpinAnimation" RepeatBehavior="Forever">
+            <DoubleAnimation Storyboard.TargetName="LoadingSpinner"
+                           Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                           From="0"
+                           To="360"
+                           Duration="0:0:1.5"/>
+        </Storyboard>
     </UserControl.Resources>
     
     <Grid>
@@ -118,13 +127,52 @@
                       VerticalScrollBarVisibility="Auto"
                       Padding="16,16,16,8"
                       Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
-            <ItemsControl x:Name="chatMessagesPanel">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <controls:RichChatMessageControl DataContext="{Binding}"/>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
+            <Grid>
+                <!-- Phase 6.1+: Spinning Loading Indicator -->
+                <Grid x:Name="loadingSpinnerPanel" 
+                      Visibility="Collapsed"
+                      HorizontalAlignment="Center"
+                      VerticalAlignment="Top"
+                      Margin="0,20,0,0">
+                    <Border Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                            BorderThickness="1"
+                            CornerRadius="8"
+                            Padding="16,12">
+                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+                            <!-- Spinning Icon -->
+                            <TextBlock x:Name="LoadingSpinner"
+                                       Text="&#xE1CD;"
+                                       FontFamily="Segoe MDL2 Assets"
+                                       FontSize="16"
+                                       Margin="0,0,8,0"
+                                       VerticalAlignment="Center"
+                                       RenderTransformOrigin="0.5,0.5"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}">
+                                <TextBlock.RenderTransform>
+                                    <RotateTransform Angle="0"/>
+                                </TextBlock.RenderTransform>
+                            </TextBlock>
+                            
+                            <!-- Loading Text -->
+                            <TextBlock x:Name="txtLoadingMessage"
+                                       Text="AI is thinking..."
+                                       FontSize="12"
+                                       VerticalAlignment="Center"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+                
+                <!-- Chat Messages -->
+                <ItemsControl x:Name="chatMessagesPanel">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <controls:RichChatMessageControl DataContext="{Binding}"/>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </Grid>
         </ScrollViewer>
 
         <!-- Input Area with Controls (Copilot-style at bottom) -->
