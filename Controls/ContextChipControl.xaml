@@ -15,6 +15,7 @@
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
                 <ColumnDefinition Width="Auto"/>
+                <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
             
             <!-- Icon -->
@@ -31,11 +32,23 @@
                        Text="{Binding DisplayText}"
                        FontSize="10"
                        VerticalAlignment="Center"
-                       Margin="0,0,6,0"
+                       Margin="0,0,4,0"
                        Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             
+            <!-- Phase 6.2: Token Count -->
+            <TextBlock Grid.Column="2"
+                       FontSize="9"
+                       VerticalAlignment="Center"
+                       Margin="0,0,6,0"
+                       Opacity="0.7"
+                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}">
+                <Run Text="~"/>
+                <Run Text="{Binding TokenCount, Mode=OneWay}"/>
+                <Run Text=" tokens"/>
+            </TextBlock>
+            
             <!-- Remove Button -->
-            <Button Grid.Column="2"
+            <Button Grid.Column="3"
                     Content="&#x00D7;"
                     Width="14"
                     Height="14"
