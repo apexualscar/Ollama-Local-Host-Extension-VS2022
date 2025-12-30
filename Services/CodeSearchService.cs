@@ -92,17 +92,38 @@ namespace OllamaLocalHostIntergration.Services
                     await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                     
                     if (_dte?.Solution == null)
+                    {
+                        System.Diagnostics.Debug.WriteLine("[CodeSearch] DTE or Solution is null");
                         return;
+                    }
+
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Starting search in solution: {_dte.Solution.FullName}");
+                    int projectCount = 0;
 
                     foreach (DteProject project in _dte.Solution.Projects)
                     {
                         try
                         {
+                            projectCount++;
+                            System.Diagnostics.Debug.WriteLine($"[CodeSearch] Searching project {projectCount}: {project.Name}");
+                            
                             // CHANGED: Use search without filter to get files AND code elements
                             SearchProject(project, string.Empty, results);
+                            
+                            System.Diagnostics.Debug.WriteLine($"[CodeSearch] Project {project.Name} yielded {results.Count} results so far");
                         }
-                        catch { }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CodeSearch] Error in project {project.Name}: {ex.Message}");
+                        }
                     }
+                    
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Total results: {results.Count}");
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Files: {results.Count(r => r.Type == SearchResultType.File)}");
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Classes: {results.Count(r => r.Type == SearchResultType.Class)}");
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Interfaces: {results.Count(r => r.Type == SearchResultType.Interface)}");
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Methods: {results.Count(r => r.Type == SearchResultType.Method)}");
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Properties: {results.Count(r => r.Type == SearchResultType.Property)}");
                 });
 
                 return results;
@@ -163,12 +184,35 @@ namespace OllamaLocalHostIntergration.Services
                             ProjectName = projectName,
                             Type = SearchResultType.File
                         });
+                        
+                        System.Diagnostics.Debug.WriteLine($"[CodeSearch] Added file: {item.Name}");
                     }
 
                     // Search code elements within file
                     if (item.FileCodeModel != null)
                     {
-                        SearchCodeElements(item.FileCodeModel.CodeElements, searchTerm, projectName, GetItemPath(item), results);
+                        System.Diagnostics.Debug.WriteLine($"[CodeSearch] Parsing code elements in: {item.Name}");
+                        try
+                        {
+                            var elements = item.FileCodeModel.CodeElements;
+                            if (elements != null && elements.Count > 0)
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] Found {elements.Count} top-level elements in {item.Name}");
+                                SearchCodeElements(elements, searchTerm, projectName, GetItemPath(item), results);
+                            }
+                            else
+                            {
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] No code elements in {item.Name} (empty or null)");
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            System.Diagnostics.Debug.WriteLine($"[CodeSearch] Error parsing elements in {item.Name}: {ex.Message}");
+                        }
+                    }
+                    else
+                    {
+                        System.Diagnostics.Debug.WriteLine($"[CodeSearch] FileCodeModel is null for: {item.Name}");
                     }
 
                     // Recursively search sub-items
@@ -177,7 +221,10 @@ namespace OllamaLocalHostIntergration.Services
                         SearchProjectItems(item.ProjectItems, searchTerm, projectName, results);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Error processing item: {ex.Message}");
+                }
             }
         }
 
@@ -264,12 +311,14 @@ namespace OllamaLocalHostIntergration.Services
                                 result.Type = SearchResultType.Class;
                                 result.ClassName = element.Name;
                                 results.Add(result);
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] Added class: {result.DisplayName}");
                                 break;
 
                             case vsCMElement.vsCMElementInterface:
                                 result.Type = SearchResultType.Interface;
                                 result.ClassName = element.Name;
                                 results.Add(result);
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] Added interface: {result.DisplayName}");
                                 break;
 
                             case vsCMElement.vsCMElementFunction:
@@ -286,6 +335,7 @@ namespace OllamaLocalHostIntergration.Services
                                 }
                                 catch { }
                                 results.Add(result);
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] Added method: {result.DisplayName}");
                                 break;
 
                             case vsCMElement.vsCMElementProperty:
@@ -302,6 +352,7 @@ namespace OllamaLocalHostIntergration.Services
                                 }
                                 catch { }
                                 results.Add(result);
+                                System.Diagnostics.Debug.WriteLine($"[CodeSearch] Added property: {result.DisplayName}");
                                 break;
                         }
                     }
@@ -312,7 +363,10 @@ namespace OllamaLocalHostIntergration.Services
                         SearchCodeElements(element.Children, searchTerm, projectName, filePath, results);
                     }
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine($"[CodeSearch] Error processing code element: {ex.Message}");
+                }
             }
         }
 

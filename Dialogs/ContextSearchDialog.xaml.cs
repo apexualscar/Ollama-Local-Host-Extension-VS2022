@@ -8,6 +8,7 @@ using System.Windows.Controls;
 using Microsoft.VisualStudio.Shell;
 using OllamaLocalHostIntergration.Models;
 using OllamaLocalHostIntergration.Services;
+using WpfSelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 
 namespace OllamaLocalHostIntergration.Dialogs
 {
@@ -30,12 +31,12 @@ namespace OllamaLocalHostIntergration.Dialogs
             
             resultsPanel.ItemsSource = _searchResults;
             
-            // Load initial results (all files)
+            // Phase 6.3: Load initial results asynchronously to avoid blocking
             _ = LoadInitialResultsAsync();
         }
 
         /// <summary>
-        /// Load initial search results (all files in solution)
+        /// Load initial search results (all files in solution) - Phase 6.3: Optimized with limit
         /// </summary>
         private async Task LoadInitialResultsAsync()
         {
@@ -43,21 +44,26 @@ namespace OllamaLocalHostIntergration.Dialogs
             {
                 ShowLoading(true);
                 
+                // Phase 6.3: Limit initial results to 100 for performance
                 var results = await _searchService.GetAllFilesAsync();
                 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 
                 _searchResults.Clear();
-                foreach (var result in results.Take(50)) // Limit to 50 initially
+                
+                // Phase 6.3: Take only first 100 results initially
+                foreach (var result in results.Take(100))
                 {
                     _searchResults.Add(new SearchResultViewModel(result));
                 }
                 
                 ShowLoading(false);
+                
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Loaded {_searchResults.Count} initial results");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error loading initial results: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error loading initial results: {ex.Message}");
                 ShowLoading(false);
             }
         }
@@ -109,7 +115,7 @@ namespace OllamaLocalHostIntergration.Dialogs
         }
 
         /// <summary>
-        /// Perform search
+        /// Perform search - Phase 6.3: Optimized with limit
         /// </summary>
         private async Task PerformSearchAsync(string searchTerm)
         {
@@ -122,27 +128,34 @@ namespace OllamaLocalHostIntergration.Dialogs
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 
                 _searchResults.Clear();
-                foreach (var result in results.Take(100)) // Limit results
+                
+                // Phase 6.3: Limit search results to 200 for performance
+                foreach (var result in results.Take(200))
                 {
                     _searchResults.Add(new SearchResultViewModel(result));
                 }
                 
                 ShowLoading(false);
+                
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Search found {_searchResults.Count} results");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"Error performing search: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error performing search: {ex.Message}");
                 ShowLoading(false);
             }
         }
 
         /// <summary>
-        /// Handle result item click
+        /// Phase 6.3: Handle ListBox selection changed (replaces button click)
         /// </summary>
-        private async void ResultItem_Click(object sender, RoutedEventArgs e)
+        private async void ResultsPanel_SelectionChanged(object sender, WpfSelectionChangedEventArgs e)
         {
-            if (sender is Button button && button.Tag is SearchResultViewModel viewModel)
+            if (resultsPanel.SelectedItem is SearchResultViewModel viewModel)
             {
+                // Deselect immediately to allow reselecting same item
+                resultsPanel.SelectedItem = null;
+                
                 try
                 {
                     ShowLoading(true);
@@ -168,10 +181,12 @@ namespace OllamaLocalHostIntergration.Dialogs
                     ContextSelected?.Invoke(this, contextRef);
                     
                     ShowLoading(false);
+                    
+                    System.Diagnostics.Debug.WriteLine($"[ContextSearch] Selected: {contextRef.DisplayText}");
                 }
                 catch (Exception ex)
                 {
-                    System.Diagnostics.Debug.WriteLine($"Error adding context: {ex.Message}");
+                    System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error adding context: {ex.Message}");
                     ShowLoading(false);
                 }
             }
@@ -302,7 +317,7 @@ namespace OllamaLocalHostIntergration.Dialogs
                     case CodeSearchService.SearchResultType.Project:
                         return "PROJECT";
                     default:
-                        return "";
+                        return ""; // Phase 6.3: Return empty string instead of unknown
                 }
             }
         }

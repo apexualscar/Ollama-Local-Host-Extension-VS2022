@@ -110,91 +110,105 @@
             </Grid>
         </Border>
 
-        <!-- Search Results -->
-        <ScrollViewer Grid.Row="1"
-                      VerticalScrollBarVisibility="Auto"
-                      Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
-            <ItemsControl x:Name="resultsPanel">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Button Click="ResultItem_Click"
-                                Tag="{Binding}"
-                                HorizontalContentAlignment="Stretch"
-                                Background="Transparent"
-                                BorderThickness="0"
-                                Padding="16,8"
-                                Cursor="Hand">
-                            <Button.Style>
-                                <Style TargetType="Button">
-                                    <Setter Property="Background" Value="Transparent"/>
-                                    <Setter Property="Template">
-                                        <Setter.Value>
-                                            <ControlTemplate TargetType="Button">
-                                                <Border Background="{TemplateBinding Background}"
-                                                        BorderThickness="0"
-                                                        Padding="{TemplateBinding Padding}">
-                                                    <ContentPresenter/>
-                                                </Border>
-                                            </ControlTemplate>
-                                        </Setter.Value>
-                                    </Setter>
+        <!-- Search Results - Phase 6.3: VirtualizingStackPanel for performance -->
+        <ListBox x:Name="resultsPanel"
+                 Grid.Row="1"
+                 BorderThickness="0"
+                 Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 VirtualizingPanel.IsVirtualizing="True"
+                 VirtualizingPanel.VirtualizationMode="Recycling"
+                 SelectionMode="Single"
+                 SelectionChanged="ResultsPanel_SelectionChanged">
+            <ListBox.ItemContainerStyle>
+                <Style TargetType="ListBoxItem">
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch"/>
+                    <Setter Property="Padding" Value="0"/>
+                    <Setter Property="Background" Value="Transparent"/>
+                    <Setter Property="BorderThickness" Value="0"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                                <Border Background="{TemplateBinding Background}"
+                                        BorderThickness="0"
+                                        Padding="16,8">
+                                    <ContentPresenter/>
+                                </Border>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                    <Style.Triggers>
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarSelectedKey}}"/>
+                        </Trigger>
+                    </Style.Triggers>
+                </Style>
+            </ListBox.ItemContainerStyle>
+            <ListBox.ItemTemplate>
+                <DataTemplate>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+
+                        <!-- Icon -->
+                        <TextBlock Grid.Column="0"
+                                   Text="{Binding Icon}"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="16"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+
+                        <!-- Content -->
+                        <StackPanel Grid.Column="1">
+                            <!-- Name -->
+                            <TextBlock Text="{Binding DisplayName}"
+                                       FontSize="12"
+                                       FontWeight="SemiBold"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            
+                            <!-- Path/Details -->
+                            <TextBlock Text="{Binding Details}"
+                                       FontSize="10"
+                                       Opacity="0.7"
+                                       Margin="0,2,0,0"
+                                       TextTrimming="CharacterEllipsis"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+
+                        <!-- Phase 6.3: Type Badge - Only show if TypeLabel is not empty -->
+                        <Border Grid.Column="2"
+                                Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
+                                CornerRadius="3"
+                                Padding="6,2"
+                                Margin="8,0,0,0"
+                                VerticalAlignment="Center">
+                            <Border.Style>
+                                <Style TargetType="Border">
+                                    <Setter Property="Visibility" Value="Visible"/>
                                     <Style.Triggers>
-                                        <Trigger Property="IsMouseOver" Value="True">
-                                            <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarHoverKey}}"/>
-                                        </Trigger>
+                                        <DataTrigger Binding="{Binding TypeLabel}" Value="">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                        </DataTrigger>
                                     </Style.Triggers>
                                 </Style>
-                            </Button.Style>
-                            
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto"/>
-                                    <ColumnDefinition Width="*"/>
-                                    <ColumnDefinition Width="Auto"/>
-                                </Grid.ColumnDefinitions>
-
-                                <!-- Icon -->
-                                <TextBlock Grid.Column="0"
-                                           Text="{Binding Icon}"
-                                           FontFamily="Segoe MDL2 Assets"
-                                           FontSize="16"
-                                           Margin="0,0,12,0"
-                                           VerticalAlignment="Center"
-                                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-
-                                <!-- Content -->
-                                <StackPanel Grid.Column="1">
-                                    <!-- Name -->
-                                    <TextBlock Text="{Binding DisplayName}"
-                                               FontSize="12"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                                    
-                                    <!-- Path/Details -->
-                                    <TextBlock Text="{Binding Details}"
-                                               FontSize="10"
-                                               Opacity="0.7"
-                                               Margin="0,2,0,0"
-                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-                                </StackPanel>
-
-                                <!-- Type Badge -->
-                                <Border Grid.Column="2"
-                                        Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentPaleKey}}"
-                                        CornerRadius="3"
-                                        Padding="6,2"
-                                        VerticalAlignment="Center">
-                                    <TextBlock Text="{Binding TypeLabel}"
-                                               FontSize="9"
-                                               FontWeight="SemiBold"
-                                               Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
-                                </Border>
-                            </Grid>
-                        </Button>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                            </Border.Style>
+                            <TextBlock Text="{Binding TypeLabel}"
+                                       FontSize="9"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        </Border>
+                    </Grid>
+                </DataTemplate>
+            </ListBox.ItemTemplate>
+        </ListBox>
 
         <!-- Footer -->
         <Border Grid.Row="2"
