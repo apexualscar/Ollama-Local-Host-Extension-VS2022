@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.Linq;
 using SelectionChangedEventArgs = System.Windows.Controls.SelectionChangedEventArgs;
 using System;
+using System.Windows.Media; // Phase 6.4: For VisualTreeHelper
 
 namespace OllamaLocalHostIntergration
 {
@@ -66,6 +67,9 @@ namespace OllamaLocalHostIntergration
             // lstContextFiles.ItemsSource = _contextFileItems;  // REMOVED - old system replaced by context references
             comboConversations.ItemsSource = _savedConversations;
             contextChipsPanel.ItemsSource = _contextReferences; // Phase 5.5.2 Context References
+
+            // Phase 6.4: Wire up CodeModificationService for RichChatMessageControl instances
+            chatMessagesPanel.ItemContainerGenerator.StatusChanged += ChatMessagesPanel_ItemContainerGenerator_StatusChanged;
 
             // Wire up context chip removal via routed event
             contextChipsPanel.AddHandler(Controls.ContextChipControl.RemoveContextEvent, new RoutedEventHandler(ContextChip_RemoveContext));
@@ -1554,5 +1558,50 @@ namespace OllamaLocalHostIntergration
         }
 
         #endregion
+
+        /// <summary>
+        /// Phase 6.4: Wire up CodeModificationService when ItemsControl containers are generated
+        /// </summary>
+        private void ChatMessagesPanel_ItemContainerGenerator_StatusChanged(object sender, EventArgs e)
+        {
+            if (chatMessagesPanel.ItemContainerGenerator.Status == System.Windows.Controls.Primitives.GeneratorStatus.ContainersGenerated)
+            {
+                // Wire up CodeModificationService for all generated controls
+                foreach (var item in chatMessagesPanel.Items)
+                {
+                    var container = chatMessagesPanel.ItemContainerGenerator.ContainerFromItem(item);
+                    if (container != null)
+                    {
+                        var richControl = FindVisualChild<Controls.RichChatMessageControl>(container);
+                        if (richControl != null)
+                        {
+                            richControl.SetCodeModificationService(_codeModService);
+                        }
+                    }
+                }
+            }
+        }
+        
+        /// <summary>
+        /// Phase 6.4: Helper method to find child controls in visual tree
+        /// </summary>
+        private T FindVisualChild<T>(DependencyObject parent) where T : DependencyObject
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(parent); i++)
+            {
+                var child = System.Windows.Media.VisualTreeHelper.GetChild(parent, i);
+                if (child is T typedChild)
+                {
+                    return typedChild;
+                }
+                
+                var childOfChild = FindVisualChild<T>(child);
+                if (childOfChild != null)
+                {
+                    return childOfChild;
+                }
+            }
+            return null;
+        }
     }
 }

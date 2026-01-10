@@ -93,94 +93,59 @@ namespace OllamaLocalHostIntergration.Controls
         {
             if (sender is Button button && button.Tag is string code)
             {
-                if (_codeModService == null || !(DataContext is ChatMessage message))
-                    return;
-                
                 try
                 {
-                    // If there's an associated CodeEdit, show diff preview
-                    if (message.AssociatedCodeEdit != null)
+                    // Phase 6.3: Always insert at cursor position, regardless of mode
+                    var codeEditorService = new CodeEditorService();
+                    
+                    // Get current cursor position info
+                    var selectionInfo = await codeEditorService.GetSelectionInfoAsync();
+                    
+                    // If there's a selection, replace it; otherwise insert at cursor
+                    bool success;
+                    if (!string.IsNullOrEmpty(selectionInfo.text))
                     {
-                        // Show diff preview dialog
-                        var diffDialog = new DiffPreviewDialog(message.AssociatedCodeEdit)
-                        {
-                            Owner = Window.GetWindow(this)
-                        };
-                        
-                        bool? result = diffDialog.ShowDialog();
-                        
-                        if (result == true && diffDialog.WasApplied)
-                        {
-                            bool success = await _codeModService.ApplyCodeEditAsync(message.AssociatedCodeEdit);
-                            
-                            if (success)
-                            {
-                                var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                                var icon = new TextBlock { Text = "\uE8FB", FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 4, 0) };
-                                var text = new TextBlock { Text = "Applied!" };
-                                stackPanel.Children.Add(icon);
-                                stackPanel.Children.Add(text);
-                                button.Content = stackPanel;
-                                button.IsEnabled = false;
-                                WpfMessageBox.Show(
-                                    "Code successfully applied to the active editor!",
-                                    "Success",
-                                    WpfMessageBoxButton.OK,
-                                    WpfMessageBoxImage.Information
-                                );
-                            }
-                            else
-                            {
-                                WpfMessageBox.Show(
-                                    "Failed to apply code. Please ensure you have an active document open.",
-                                    "Error",
-                                    WpfMessageBoxButton.OK,
-                                    WpfMessageBoxImage.Error
-                                );
-                            }
-                        }
+                        // Replace selection
+                        success = await codeEditorService.ReplaceSelectedTextAsync(code);
                     }
                     else
                     {
-                        // Direct code application without CodeEdit (fallback)
-                        var result = WpfMessageBox.Show(
-                            "Apply this code to the active editor? This will replace the current selection or document.",
-                            "Confirm Code Application",
-                            WpfMessageBoxButton.YesNo,
-                            WpfMessageBoxImage.Question
-                        );
+                        // Insert at cursor position
+                        success = await codeEditorService.InsertTextAtCursorAsync(code);
+                    }
+                    
+                    if (success)
+                    {
+                        // Visual feedback
+                        var originalContent = button.Content;
                         
-                        if (result == WpfMessageBoxResult.Yes)
+                        var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
+                        var icon = new TextBlock { Text = "\uE8FB", FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 4, 0) };
+                        var text = new TextBlock { Text = "Applied!" };
+                        stackPanel.Children.Add(icon);
+                        stackPanel.Children.Add(text);
+                        button.Content = stackPanel;
+                        
+                        // Reset after 2 seconds
+                        var timer = new System.Windows.Threading.DispatcherTimer
                         {
-                            var codeEditorService = new CodeEditorService();
-                            bool success = await codeEditorService.ReplaceSelectedTextAsync(code);
-                            
-                            if (!success)
-                            {
-                                success = await codeEditorService.ReplaceDocumentTextAsync(code);
-                            }
-                            
-                            if (success)
-                            {
-                                button.Content = "? Applied!";
-                                button.IsEnabled = false;
-                                WpfMessageBox.Show(
-                                    "Code successfully applied!",
-                                    "Success",
-                                    WpfMessageBoxButton.OK,
-                                    WpfMessageBoxImage.Information
-                                );
-                            }
-                            else
-                            {
-                                WpfMessageBox.Show(
-                                    "Failed to apply code. Please check the active editor.",
-                                    "Error",
-                                    WpfMessageBoxButton.OK,
-                                    WpfMessageBoxImage.Error
-                                );
-                            }
-                        }
+                            Interval = TimeSpan.FromSeconds(2)
+                        };
+                        timer.Tick += (s, args) =>
+                        {
+                            button.Content = originalContent;
+                            timer.Stop();
+                        };
+                        timer.Start();
+                    }
+                    else
+                    {
+                        WpfMessageBox.Show(
+                            "Failed to insert code. Please ensure you have an active document open with a cursor position.",
+                            "Error",
+                            WpfMessageBoxButton.OK,
+                            WpfMessageBoxImage.Error
+                        );
                     }
                 }
                 catch (Exception ex)

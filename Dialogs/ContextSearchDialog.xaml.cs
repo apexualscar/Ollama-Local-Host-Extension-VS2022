@@ -36,7 +36,7 @@ namespace OllamaLocalHostIntergration.Dialogs
         }
 
         /// <summary>
-        /// Load initial search results (all files in solution) - Phase 6.3: Optimized with limit
+        /// Load initial search results (all files in solution) - Phase 6.3: Lazy loading
         /// </summary>
         private async Task LoadInitialResultsAsync()
         {
@@ -44,26 +44,17 @@ namespace OllamaLocalHostIntergration.Dialogs
             {
                 ShowLoading(true);
                 
-                // Phase 6.3: Limit initial results to 100 for performance
-                var results = await _searchService.GetAllFilesAsync();
-                
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                
+                // Phase 6.3: Don't load anything initially - wait for user to type
+                // This eliminates the 10-second freeze
                 _searchResults.Clear();
-                
-                // Phase 6.3: Take only first 100 results initially
-                foreach (var result in results.Take(100))
-                {
-                    _searchResults.Add(new SearchResultViewModel(result));
-                }
                 
                 ShowLoading(false);
                 
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Loaded {_searchResults.Count} initial results");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Ready for search");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error loading initial results: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error: {ex.Message}");
                 ShowLoading(false);
             }
         }
@@ -85,14 +76,14 @@ namespace OllamaLocalHostIntergration.Dialogs
 
             var searchTerm = txtSearch.Text?.Trim();
             
+            // Phase 6.3: Show placeholder message if empty
             if (string.IsNullOrEmpty(searchTerm))
             {
-                // Show all files if search is empty
-                await LoadInitialResultsAsync();
+                _searchResults.Clear();
                 return;
             }
 
-            // Debounce search
+            // Debounce search - only search after 300ms of no typing
             try
             {
                 await Task.Delay(300, token);
