@@ -119,6 +119,8 @@ namespace OllamaLocalHostIntergration
             _ = LoadSavedConversationsAsync();
             // Phase 5.7: Load saved pending changes
             _ = LoadSavedPendingChangesAsync();
+            // Phase 6.5: Auto-add active document if enabled
+            _ = AutoAddActiveDocumentIfEnabledAsync();
         }
         
         /// <summary>
@@ -209,11 +211,26 @@ namespace OllamaLocalHostIntergration
             if (settingsPanel.Visibility == Visibility.Collapsed)
             {
                 settingsPanel.Visibility = Visibility.Visible;
+                // Phase 6.5: Load current setting
+                chkAutoAddActiveDocument.IsChecked = _settingsService.GetAutoAddActiveDocument();
             }
             else
             {
                 settingsPanel.Visibility = Visibility.Collapsed;
             }
+        }
+
+        /// <summary>
+        /// Phase 6.5: Handle auto-add active document setting change
+        /// </summary>
+        private void AutoAddActiveDocument_Changed(object sender, RoutedEventArgs e)
+        {
+            if (_isInitializing)
+                return;
+                
+            bool autoAdd = chkAutoAddActiveDocument.IsChecked ?? true;
+            _settingsService.SaveAutoAddActiveDocument(autoAdd);
+            txtStatusBar.Text = autoAdd ? "Auto-add active document enabled" : "Auto-add active document disabled";
         }
 
         private async void SendMessageClick(object sender, RoutedEventArgs e)
@@ -1120,34 +1137,89 @@ namespace OllamaLocalHostIntergration
         #region Context References (Phase 5.5.2)
 
         /// <summary>
-        /// Shows context search dialog (Phase 5.6 - Copilot-style)
+        /// Shows context type selection dialog (Phase 6.5 - Pre-filter by type)
         /// </summary>
         private async void AddContextClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Create and show search dialog
-                var dialog = new Dialogs.ContextSearchDialog();
+                // Phase 6.5: Show type selection first
+                var typeDialog = new Dialogs.ContextTypeSelectionDialog();
+                
+                typeDialog.TypeSelected += async (s, selectedType) =>
+                {
+                    // Close the type selection dialog
+                    var typeWindow = System.Windows.Window.GetWindow(typeDialog);
+                    typeWindow?.Close();
+                    
+                    // Handle the selected type
+                    switch (selectedType)
+                    {
+                        case "ActiveDocument":
+                            await AddActiveDocumentContextAsync();
+                            break;
+                            
+                        case "Selection":
+                            await AddSelectionContextAsync();
+                            break;
+                            
+                        case "WholeSolution":
+                            await AddWholeSolutionContextAsync();
+                            break;
+                            
+                        case "SearchFiles":
+                            ShowContextSearch("File");
+                            break;
+                            
+                        case "SearchClasses":
+                            ShowContextSearch("Class");
+                            break;
+                            
+                        case "SearchMethods":
+                            ShowContextSearch("Method");
+                            break;
+                    }
+                };
+
+                // Show type selection dialog
+                var typeWindow = new System.Windows.Window
+                {
+                    Content = typeDialog,
+                    Title = "Add Context",
+                    Width = 500,
+                    Height = 400,
+                    WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
+                    Owner = System.Windows.Window.GetWindow(this),
+                    ResizeMode = System.Windows.ResizeMode.NoResize,
+                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent),
+                    WindowStyle = System.Windows.WindowStyle.ToolWindow
+                };
+                
+                typeWindow.ShowDialog();
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error opening context dialog: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Phase 6.5: Shows context search dialog filtered by type
+        /// </summary>
+        private void ShowContextSearch(string searchType)
+        {
+            try
+            {
+                // Create search dialog with filter
+                var dialog = new Dialogs.ContextSearchDialog(searchType);
                 
                 // Subscribe to context selected event
                 dialog.ContextSelected += async (s, contextRef) =>
                 {
-                    // Handle special cases (active document, selection)
-                    if (contextRef.DisplayText == "Active Document")
-                    {
-                        await AddActiveDocumentContextAsync();
-                    }
-                    else if (contextRef.DisplayText == "Selection")
-                    {
-                        await AddSelectionContextAsync();
-                    }
-                    else
-                    {
-                        // Add the selected context reference
-                        _contextReferences.Add(contextRef);
-                        UpdateContextSummary();
-                        txtStatusBar.Text = $"Added {contextRef.DisplayText} to context";
-                    }
+                    // Add the selected context reference
+                    _contextReferences.Add(contextRef);
+                    UpdateContextSummary();
+                    txtStatusBar.Text = $"Added {contextRef.DisplayText} to context";
                     
                     // Close the dialog window
                     var window = System.Windows.Window.GetWindow(dialog);
@@ -1158,7 +1230,7 @@ namespace OllamaLocalHostIntergration
                 var window = new System.Windows.Window
                 {
                     Content = dialog,
-                    Title = "Add Context",
+                    Title = $"Search {searchType}",
                     Width = 600,
                     Height = 500,
                     WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
@@ -1172,7 +1244,67 @@ namespace OllamaLocalHostIntergration
             }
             catch (Exception ex)
             {
-                txtStatusBar.Text = $"Error opening context search: {ex.Message}";
+                txtStatusBar.Text = $"Error opening search: {ex.Message}";
+            }
+        }
+
+        /// <summary>
+        /// Phase 6.5: Adds whole solution context
+        /// </summary>
+        private async Task AddWholeSolutionContextAsync()
+        {
+            try
+            {
+                txtStatusBar.Text = "Building solution context (this may take a moment)...";
+                
+                // Get all project files
+                var searchService = new Services.CodeSearchService();
+                var allFiles = await searchService.GetAllFilesAsync();
+                
+                if (allFiles.Count == 0)
+                {
+                    txtStatusBar.Text = "No files found in solution";
+                    return;
+                }
+                
+                // Build a summary of the solution
+                var summary = new System.Text.StringBuilder();
+                summary.AppendLine($"Solution structure ({allFiles.Count} files):");
+                summary.AppendLine();
+                
+                // Group by project
+                var byProject = allFiles.GroupBy(f => f.ProjectName);
+                foreach (var projectGroup in byProject)
+                {
+                    summary.AppendLine($"Project: {projectGroup.Key}");
+                    foreach (var file in projectGroup.Take(10)) // Limit files per project
+                    {
+                        summary.AppendLine($"  - {file.DisplayName}");
+                    }
+                    if (projectGroup.Count() > 10)
+                    {
+                        summary.AppendLine($"  ... and {projectGroup.Count() - 10} more files");
+                    }
+                    summary.AppendLine();
+                }
+                
+                var tokenCount = _promptBuilder.EstimateTokenCount(summary.ToString());
+                
+                var contextRef = new ContextReference
+                {
+                    Type = ContextReferenceType.Project,
+                    DisplayText = "Whole Solution",
+                    Content = summary.ToString(),
+                    TokenCount = tokenCount
+                };
+                
+                _contextReferences.Add(contextRef);
+                UpdateContextSummary();
+                txtStatusBar.Text = $"Added solution structure to context ({allFiles.Count} files)";
+            }
+            catch (Exception ex)
+            {
+                txtStatusBar.Text = $"Error adding solution: {ex.Message}";
             }
         }
 
@@ -1230,12 +1362,13 @@ namespace OllamaLocalHostIntergration
                 }
 
                 var language = await _codeEditorService.GetActiveDocumentLanguageAsync();
+                var selectionInfo = await _codeEditorService.GetSelectionInfoAsync();
                 var tokenCount = _promptBuilder.EstimateTokenCount(selectedText);
 
                 var contextRef = new ContextReference
                 {
                     Type = ContextReferenceType.Selection,
-                    DisplayText = $"Selection ({selectedText.Length} chars)",
+                    DisplayText = $"Selection (Lines {selectionInfo.startLine}-{selectionInfo.endLine})",
                     Content = selectedText,
                     TokenCount = tokenCount
                 };
@@ -1268,6 +1401,13 @@ namespace OllamaLocalHostIntergration
                 var documentName = System.IO.Path.GetFileName(documentPath) ?? "Active Document";
                 var tokenCount = _promptBuilder.EstimateTokenCount(documentText);
 
+                // Phase 6.5: Check if already added
+                if (_contextReferences.Any(c => c.FilePath == documentPath))
+                {
+                    txtStatusBar.Text = $"{documentName} already in context";
+                    return;
+                }
+
                 var contextRef = new ContextReference
                 {
                     Type = ContextReferenceType.File,
@@ -1288,54 +1428,20 @@ namespace OllamaLocalHostIntergration
         }
 
         /// <summary>
-        /// Updates context summary text
+        /// Phase 6.5: Auto-add active document if enabled
         /// </summary>
-        private void UpdateContextSummary()
+        private async Task AutoAddActiveDocumentIfEnabledAsync()
         {
-            if (_contextReferences.Count == 0)
+            try
             {
-                txtContextSummary.Text = "No context added";
+                if (_settingsService.GetAutoAddActiveDocument())
+                {
+                    await AddActiveDocumentContextAsync();
+                }
             }
-            else
+            catch (Exception ex)
             {
-                int totalTokens = _contextReferences.Sum(c => c.TokenCount);
-                txtContextSummary.Text = $"{_contextReferences.Count} item(s), ~{totalTokens} tokens";
-            }
-        }
-
-        /// <summary>
-        /// Builds context prompt from all references
-        /// </summary>
-        private string BuildContextFromReferences()
-        {
-            if (_contextReferences.Count == 0)
-                return string.Empty;
-
-            var context = new System.Text.StringBuilder();
-            context.AppendLine("=== Context References ===");
-            context.AppendLine();
-
-            foreach (var reference in _contextReferences)
-            {
-                context.AppendLine($"### {reference.Type}: {reference.DisplayText}");
-                context.AppendLine("```");
-                context.AppendLine(reference.Content);
-                context.AppendLine("```");
-                context.AppendLine();
-            }
-
-            return context.ToString();
-        }
-
-        /// <summary>
-        /// Handles removal of a context chip (routed event)
-        /// </summary>
-        private void ContextChip_RemoveContext(object sender, RoutedEventArgs e)
-        {
-            if (e.OriginalSource is ContextReference contextRef)
-            {
-                _contextReferences.Remove(contextRef);
-                txtStatusBar.Text = $"Removed {contextRef.DisplayText} from context";
+                System.Diagnostics.Debug.WriteLine($"Auto-add failed: {ex.Message}");
             }
         }
 
@@ -1603,5 +1709,61 @@ namespace OllamaLocalHostIntergration
             }
             return null;
         }
+
+        #region Context References (Phase 5.5.2)
+
+        /// <summary>
+        /// Updates context summary text
+        /// </summary>
+        private void UpdateContextSummary()
+        {
+            if (_contextReferences.Count == 0)
+            {
+                txtContextSummary.Text = "No context added";
+            }
+            else
+            {
+                int totalTokens = _contextReferences.Sum(c => c.TokenCount);
+                txtContextSummary.Text = $"{_contextReferences.Count} item(s), ~{totalTokens} tokens";
+            }
+        }
+
+        /// <summary>
+        /// Builds context prompt from all references
+        /// </summary>
+        private string BuildContextFromReferences()
+        {
+            if (_contextReferences.Count == 0)
+                return string.Empty;
+
+            var context = new System.Text.StringBuilder();
+            context.AppendLine("=== Context References ===");
+            context.AppendLine();
+
+            foreach (var reference in _contextReferences)
+            {
+                context.AppendLine($"### {reference.Type}: {reference.DisplayText}");
+                context.AppendLine("```");
+                context.AppendLine(reference.Content);
+                context.AppendLine("```");
+                context.AppendLine();
+            }
+
+            return context.ToString();
+        }
+
+        /// <summary>
+        /// Handles removal of a context chip (routed event)
+        /// </summary>
+        private void ContextChip_RemoveContext(object sender, RoutedEventArgs e)
+        {
+            if (e.OriginalSource is ContextReference contextRef)
+            {
+                _contextReferences.Remove(contextRef);
+                txtStatusBar.Text = $"Removed {contextRef.DisplayText} from context";
+            }
+        }
+
+        #endregion
     }
 }

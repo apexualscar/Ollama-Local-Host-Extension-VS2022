@@ -319,7 +319,17 @@
                                     Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
                         </Grid>
                         
-                        <TextBlock Text="Context management has moved above the input box"
+                        <!-- Phase 6.5: Auto-add Active Document -->
+                        <CheckBox x:Name="chkAutoAddActiveDocument"
+                                  Content="Auto-add active document to context"
+                                  FontSize="11"
+                                  Margin="0,0,0,8"
+                                  IsChecked="True"
+                                  Checked="AutoAddActiveDocument_Changed"
+                                  Unchecked="AutoAddActiveDocument_Changed"
+                                  Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+                        
+                        <TextBlock Text="Context management is above the input box"
                                    FontSize="10"
                                    FontStyle="Italic"
                                    Opacity="0.7"

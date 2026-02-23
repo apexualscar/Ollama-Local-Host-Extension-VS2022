@@ -1,0 +1,217 @@
+<UserControl x:Class="OllamaLocalHostIntergration.Dialogs.ContextTypeSelectionDialog"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
+             xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
+             toolkit:Themes.UseVsTheme="True"
+             Width="500"
+             Height="400"
+             Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0"
+                BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                BorderThickness="0,0,0,1"
+                Padding="16,12"
+                Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
+            <TextBlock Text="Add Context"
+                       FontSize="14"
+                       FontWeight="SemiBold"
+                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        </Border>
+
+        <!-- Options -->
+        <ScrollViewer Grid.Row="1"
+                      VerticalScrollBarVisibility="Auto"
+                      Padding="16">
+            <StackPanel>
+                <!-- Quick Actions -->
+                <TextBlock Text="Quick Actions"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12"
+                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                
+                <!-- Active Document -->
+                <Button Click="ActiveDocument_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A5;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Active Document"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Add the currently open file"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Selection -->
+                <Button Click="Selection_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8E6;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Selection"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Add highlighted code from active document"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Whole Solution -->
+                <Button Click="WholeSolution_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,16"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8F1;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Whole Solution"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Add entire solution structure (may be large)"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Search Actions -->
+                <TextBlock Text="Search for Specific Items"
+                           FontSize="12"
+                           FontWeight="SemiBold"
+                           Margin="0,0,0,12"
+                           Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+
+                <!-- Search Files -->
+                <Button Click="SearchFiles_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8A5;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Search Files"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Find and add specific files by name"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Search Classes -->
+                <Button Click="SearchClasses_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8D3;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Search Classes"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Find and add specific classes"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+
+                <!-- Search Methods -->
+                <Button Click="SearchMethods_Click"
+                        HorizontalContentAlignment="Left"
+                        Padding="16,12"
+                        Margin="0,0,0,8"
+                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                        BorderThickness="1">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock Text="&#xE8E3;"
+                                   FontFamily="Segoe MDL2 Assets"
+                                   FontSize="20"
+                                   Margin="0,0,12,0"
+                                   VerticalAlignment="Center"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        <StackPanel>
+                            <TextBlock Text="Search Methods"
+                                       FontSize="13"
+                                       FontWeight="SemiBold"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                            <TextBlock Text="Find and add specific methods"
+                                       FontSize="11"
+                                       Opacity="0.7"
+                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                        </StackPanel>
+                    </StackPanel>
+                </Button>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</UserControl>

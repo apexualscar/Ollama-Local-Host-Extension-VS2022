@@ -18,44 +18,60 @@ namespace OllamaLocalHostIntergration.Dialogs
         private readonly PromptBuilder _promptBuilder;
         private ObservableCollection<SearchResultViewModel> _searchResults;
         private System.Threading.CancellationTokenSource _searchCts;
+        private string _filterType; // Phase 6.5: Filter by type
 
         public event EventHandler<ContextReference> ContextSelected;
 
-        public ContextSearchDialog()
+        public ContextSearchDialog(string filterType = null)
         {
             InitializeComponent();
             
             _searchService = new CodeSearchService();
             _promptBuilder = new PromptBuilder();
             _searchResults = new ObservableCollection<SearchResultViewModel>();
+            _filterType = filterType; // Phase 6.5: Store filter
             
             resultsPanel.ItemsSource = _searchResults;
             
-            // Phase 6.3: Load initial results asynchronously to avoid blocking
-            _ = LoadInitialResultsAsync();
+            // Phase 6.5: Update placeholder based on filter
+            UpdatePlaceholder();
+            
+            System.Diagnostics.Debug.WriteLine($"[ContextSearch] Initialized with filter: {filterType ?? "None"}");
         }
 
         /// <summary>
-        /// Load initial search results (all files in solution) - Phase 6.3: Lazy loading
+        /// Phase 6.5: Update placeholder text based on filter
+        /// </summary>
+        private void UpdatePlaceholder()
+        {
+            string placeholder = _filterType switch
+            {
+                "File" => "Type at least 2 characters to search files...",
+                "Class" => "Type at least 2 characters to search classes...",
+                "Method" => "Type at least 2 characters to search methods...",
+                _ => "Type at least 2 characters to search files, classes, methods..."
+            };
+            
+            txtPlaceholder.Text = placeholder;
+        }
+
+        /// <summary>
+        /// Load initial search results - Phase 6.3 FIX: Show helpful message, don't load anything
         /// </summary>
         private async Task LoadInitialResultsAsync()
         {
             try
             {
-                ShowLoading(true);
+                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 
-                // Phase 6.3: Don't load anything initially - wait for user to type
-                // This eliminates the 10-second freeze
+                // Phase 6.3 FIX: Don't load anything - just show placeholder
                 _searchResults.Clear();
                 
-                ShowLoading(false);
-                
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Ready for search");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Ready - waiting for user input");
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error: {ex.Message}");
-                ShowLoading(false);
             }
         }
 
@@ -76,26 +92,24 @@ namespace OllamaLocalHostIntergration.Dialogs
 
             var searchTerm = txtSearch.Text?.Trim();
             
-            // Phase 6.3: Show placeholder message if empty
-            if (string.IsNullOrEmpty(searchTerm))
+            // Phase 6.3 FIX: Require at least 2 characters to search
+            if (string.IsNullOrEmpty(searchTerm) || searchTerm.Length < 2)
             {
                 _searchResults.Clear();
                 return;
             }
 
-            // Debounce search - only search after 300ms of no typing
+            // Debounce search - wait for user to stop typing
             try
             {
-                await Task.Delay(300, token);
+                await Task.Delay(400, token); // Slightly longer delay for better debouncing
             }
             catch (System.Threading.Tasks.TaskCanceledException)
             {
-                // Expected when user types quickly - exit gracefully
                 return;
             }
             catch (System.OperationCanceledException)
             {
-                // Also handle OperationCanceledException
                 return;
             }
             
@@ -106,7 +120,7 @@ namespace OllamaLocalHostIntergration.Dialogs
         }
 
         /// <summary>
-        /// Perform search - Phase 6.3: Optimized with limit
+        /// Perform search - Phase 6.3 FIX: Async on background thread with filtering
         /// </summary>
         private async Task PerformSearchAsync(string searchTerm)
         {
@@ -114,25 +128,53 @@ namespace OllamaLocalHostIntergration.Dialogs
             {
                 ShowLoading(true);
                 
-                var results = await _searchService.SearchSolutionAsync(searchTerm);
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Searching for: {searchTerm} (Filter: {_filterType ?? "None"})");
+                
+                // Phase 6.5: Run search on background thread with filter
+                var results = await Task.Run(async () =>
+                {
+                    var allResults = await _searchService.SearchSolutionAsync(searchTerm);
+                    
+                    // Phase 6.5: Filter results by type if specified
+                    if (!string.IsNullOrEmpty(_filterType))
+                    {
+                        allResults = allResults.Where(r => 
+                        {
+                            return _filterType switch
+                            {
+                                "File" => r.Type == CodeSearchService.SearchResultType.File,
+                                "Class" => r.Type == CodeSearchService.SearchResultType.Class || 
+                                          r.Type == CodeSearchService.SearchResultType.Interface,
+                                "Method" => r.Type == CodeSearchService.SearchResultType.Method || 
+                                           r.Type == CodeSearchService.SearchResultType.Property,
+                                _ => true
+                            };
+                        }).ToList();
+                    }
+                    
+                    return allResults;
+                });
                 
                 await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
                 
                 _searchResults.Clear();
                 
-                // Phase 6.3: Limit search results to 200 for performance
-                foreach (var result in results.Take(200))
+                // Phase 6.5: Limit results to 100 for performance
+                int count = 0;
+                foreach (var result in results)
                 {
+                    if (count >= 100) break;
                     _searchResults.Add(new SearchResultViewModel(result));
+                    count++;
                 }
                 
                 ShowLoading(false);
                 
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Search found {_searchResults.Count} results");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Found {_searchResults.Count} results (filtered by {_filterType ?? "None"})");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error performing search: {ex.Message}");
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Search error: {ex.Message}");
                 ShowLoading(false);
             }
         }

@@ -36,21 +36,16 @@ namespace OllamaLocalHostIntergration.Services
         /// </summary>
         public string GetServerAddress()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             try
             {
-                if (_settingsStore.PropertyExists(CollectionPath, ServerAddressKey))
+                if (_settingsStore.PropertyExists(CollectionPath, "ServerAddress"))
                 {
-                    return _settingsStore.GetString(CollectionPath, ServerAddressKey);
+                    return _settingsStore.GetString(CollectionPath, "ServerAddress");
                 }
             }
-            catch (Exception)
-            {
-                // If any error occurs, return default
-            }
+            catch { }
 
-            return DefaultServerAddress;
+            return "http://localhost:11434";
         }
 
         /// <summary>
@@ -58,18 +53,17 @@ namespace OllamaLocalHostIntergration.Services
         /// </summary>
         public void SaveServerAddress(string serverAddress)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             try
             {
-                if (!string.IsNullOrWhiteSpace(serverAddress))
+                if (!_settingsStore.CollectionExists(CollectionPath))
                 {
-                    _settingsStore.SetString(CollectionPath, ServerAddressKey, serverAddress);
+                    _settingsStore.CreateCollection(CollectionPath);
                 }
+
+                _settingsStore.SetString(CollectionPath, "ServerAddress", serverAddress);
             }
             catch (Exception ex)
             {
-                // Log error but don't throw - settings save failures shouldn't crash the extension
                 System.Diagnostics.Debug.WriteLine($"Failed to save server address: {ex.Message}");
             }
         }
@@ -79,19 +73,14 @@ namespace OllamaLocalHostIntergration.Services
         /// </summary>
         public string GetSelectedModel()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             try
             {
-                if (_settingsStore.PropertyExists(CollectionPath, SelectedModelKey))
+                if (_settingsStore.PropertyExists(CollectionPath, "SelectedModel"))
                 {
-                    return _settingsStore.GetString(CollectionPath, SelectedModelKey);
+                    return _settingsStore.GetString(CollectionPath, "SelectedModel");
                 }
             }
-            catch (Exception)
-            {
-                // If any error occurs, return null
-            }
+            catch { }
 
             return null;
         }
@@ -101,19 +90,55 @@ namespace OllamaLocalHostIntergration.Services
         /// </summary>
         public void SaveSelectedModel(string modelName)
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             try
             {
-                if (!string.IsNullOrWhiteSpace(modelName))
+                if (!_settingsStore.CollectionExists(CollectionPath))
                 {
-                    _settingsStore.SetString(CollectionPath, SelectedModelKey, modelName);
+                    _settingsStore.CreateCollection(CollectionPath);
                 }
+
+                _settingsStore.SetString(CollectionPath, "SelectedModel", modelName);
             }
             catch (Exception ex)
             {
-                // Log error but don't throw
                 System.Diagnostics.Debug.WriteLine($"Failed to save selected model: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Phase 6.5: Gets whether to auto-add active document to context
+        /// </summary>
+        public bool GetAutoAddActiveDocument()
+        {
+            try
+            {
+                if (_settingsStore.PropertyExists(CollectionPath, "AutoAddActiveDocument"))
+                {
+                    return _settingsStore.GetBoolean(CollectionPath, "AutoAddActiveDocument");
+                }
+            }
+            catch { }
+
+            return true; // Default to true
+        }
+
+        /// <summary>
+        /// Phase 6.5: Saves whether to auto-add active document to context
+        /// </summary>
+        public void SaveAutoAddActiveDocument(bool autoAdd)
+        {
+            try
+            {
+                if (!_settingsStore.CollectionExists(CollectionPath))
+                {
+                    _settingsStore.CreateCollection(CollectionPath);
+                }
+
+                _settingsStore.SetBoolean(CollectionPath, "AutoAddActiveDocument", autoAdd);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Failed to save auto-add setting: {ex.Message}");
             }
         }
 
@@ -122,14 +147,11 @@ namespace OllamaLocalHostIntergration.Services
         /// </summary>
         public void ClearSettings()
         {
-            ThreadHelper.ThrowIfNotOnUIThread();
-
             try
             {
                 if (_settingsStore.CollectionExists(CollectionPath))
                 {
                     _settingsStore.DeleteCollection(CollectionPath);
-                    _settingsStore.CreateCollection(CollectionPath);
                 }
             }
             catch (Exception ex)

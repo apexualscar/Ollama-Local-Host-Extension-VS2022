@@ -1,4 +1,5 @@
 using System;
+using System.ComponentModel;
 
 namespace OllamaLocalHostIntergration.Models
 {
@@ -41,23 +42,99 @@ namespace OllamaLocalHostIntergration.Models
     /// <summary>
     /// Represents a context reference that can be added to the chat
     /// </summary>
-    public class ContextReference
+    public class ContextReference : INotifyPropertyChanged
     {
-        public Guid Id { get; set; }
-        public ContextReferenceType Type { get; set; }
-        public string DisplayText { get; set; }
-        public string FilePath { get; set; }
-        public string ClassName { get; set; }
-        public string MethodName { get; set; }
-        public string ProjectName { get; set; }
-        public string Content { get; set; }
-        public int TokenCount { get; set; }
-        public DateTime CreatedAt { get; set; }
+        private ContextReferenceType _type;
+        private string _displayText;
+        private string _filePath;
+        private string _className;
+        private string _methodName;
+        private string _projectName;
+        private string _content;
+        private int _tokenCount;
 
-        public ContextReference()
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        public ContextReferenceType Type
         {
-            Id = Guid.NewGuid();
-            CreatedAt = DateTime.Now;
+            get => _type;
+            set
+            {
+                _type = value;
+                OnPropertyChanged(nameof(Type));
+                OnPropertyChanged(nameof(Icon));
+                OnPropertyChanged(nameof(TypeLabel));
+            }
+        }
+
+        public string DisplayText
+        {
+            get => _displayText;
+            set
+            {
+                _displayText = value;
+                OnPropertyChanged(nameof(DisplayText));
+            }
+        }
+
+        public string FilePath
+        {
+            get => _filePath;
+            set
+            {
+                _filePath = value;
+                OnPropertyChanged(nameof(FilePath));
+            }
+        }
+
+        public string ClassName
+        {
+            get => _className;
+            set
+            {
+                _className = value;
+                OnPropertyChanged(nameof(ClassName));
+            }
+        }
+
+        public string MethodName
+        {
+            get => _methodName;
+            set
+            {
+                _methodName = value;
+                OnPropertyChanged(nameof(MethodName));
+            }
+        }
+
+        public string ProjectName
+        {
+            get => _projectName;
+            set
+            {
+                _projectName = value;
+                OnPropertyChanged(nameof(ProjectName));
+            }
+        }
+
+        public string Content
+        {
+            get => _content;
+            set
+            {
+                _content = value;
+                OnPropertyChanged(nameof(Content));
+            }
+        }
+
+        public int TokenCount
+        {
+            get => _tokenCount;
+            set
+            {
+                _tokenCount = value;
+                OnPropertyChanged(nameof(TokenCount));
+            }
         }
 
         /// <summary>
@@ -69,20 +146,38 @@ namespace OllamaLocalHostIntergration.Models
             {
                 return Type switch
                 {
-                    ContextReferenceType.File => "\uE8A5",        // Document icon
-                    ContextReferenceType.Selection => "\uE8C8",    // Edit icon
-                    ContextReferenceType.Method => "\uE8E3",       // Method icon
-                    ContextReferenceType.Class => "\uE8D3",        // Class icon
-                    ContextReferenceType.Solution => "\uE8F0",     // Solution icon
-                    ContextReferenceType.Project => "\uE8F1",      // Project icon
+                    ContextReferenceType.File => "\uE8A5",      // Document
+                    ContextReferenceType.Class => "\uE8D3",     // Class
+                    ContextReferenceType.Method => "\uE8E3",    // Method
+                    ContextReferenceType.Selection => "\uE8E6", // Selection
+                    ContextReferenceType.Project => "\uE8F1",   // Project
                     _ => "\uE8A5"
                 };
             }
         }
 
         /// <summary>
-        /// Gets a short display text with token count
+        /// Phase 6.5: Gets a label for the context reference type
         /// </summary>
-        public string ShortDisplay => $"{DisplayText} (~{TokenCount} tokens)";
+        public string TypeLabel
+        {
+            get
+            {
+                return Type switch
+                {
+                    ContextReferenceType.File => "FILE",
+                    ContextReferenceType.Class => "CLASS",
+                    ContextReferenceType.Method => "METHOD",
+                    ContextReferenceType.Selection => "SELECTION",
+                    ContextReferenceType.Project => "PROJECT",
+                    _ => "ITEM"
+                };
+            }
+        }
+
+        protected virtual void OnPropertyChanged(string propertyName)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
     }
 }

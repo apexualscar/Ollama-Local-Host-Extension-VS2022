@@ -95,17 +95,17 @@ namespace OllamaLocalHostIntergration.Controls
             {
                 try
                 {
-                    // Phase 6.3: Always insert at cursor position, regardless of mode
+                    // Phase 6.3 FIX: Direct insertion using CodeEditorService
                     var codeEditorService = new CodeEditorService();
                     
-                    // Get current cursor position info
+                    // Check if there's a selection
                     var selectionInfo = await codeEditorService.GetSelectionInfoAsync();
                     
-                    // If there's a selection, replace it; otherwise insert at cursor
-                    bool success;
+                    bool success = false;
+                    
                     if (!string.IsNullOrEmpty(selectionInfo.text))
                     {
-                        // Replace selection
+                        // Replace the selected text
                         success = await codeEditorService.ReplaceSelectedTextAsync(code);
                     }
                     else
@@ -116,17 +116,22 @@ namespace OllamaLocalHostIntergration.Controls
                     
                     if (success)
                     {
-                        // Visual feedback
+                        // Visual feedback - update button
                         var originalContent = button.Content;
                         
                         var stackPanel = new StackPanel { Orientation = Orientation.Horizontal };
-                        var icon = new TextBlock { Text = "\uE8FB", FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), Margin = new Thickness(0, 0, 4, 0) };
+                        var icon = new TextBlock 
+                        { 
+                            Text = "\uE73E", // Checkmark icon
+                            FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"), 
+                            Margin = new Thickness(0, 0, 4, 0) 
+                        };
                         var text = new TextBlock { Text = "Applied!" };
                         stackPanel.Children.Add(icon);
                         stackPanel.Children.Add(text);
                         button.Content = stackPanel;
                         
-                        // Reset after 2 seconds
+                        // Reset button after 2 seconds
                         var timer = new System.Windows.Threading.DispatcherTimer
                         {
                             Interval = TimeSpan.FromSeconds(2)
@@ -141,7 +146,7 @@ namespace OllamaLocalHostIntergration.Controls
                     else
                     {
                         WpfMessageBox.Show(
-                            "Failed to insert code. Please ensure you have an active document open with a cursor position.",
+                            "Failed to insert code. Please ensure you have an active document open.",
                             "Error",
                             WpfMessageBoxButton.OK,
                             WpfMessageBoxImage.Error
