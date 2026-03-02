@@ -4,11 +4,18 @@
              xmlns:vsshell="clr-namespace:Microsoft.VisualStudio.Shell;assembly=Microsoft.VisualStudio.Shell.15.0"
              xmlns:toolkit="clr-namespace:Community.VisualStudio.Toolkit;assembly=Community.VisualStudio.Toolkit"
              toolkit:Themes.UseVsTheme="True">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/OllamaLocalHostIntergration;component/Styles/CopilotStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Border Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
             BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
             BorderThickness="1"
-            CornerRadius="4"
-            Padding="8,6"
+            CornerRadius="6"
+            Padding="10,8"
             Margin="0,0,0,4">
         <Grid>
             <Grid.ColumnDefinitions>
@@ -36,7 +43,7 @@
                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                 <TextBlock Text="{Binding FilePath}"
                            FontSize="9"
-                           Opacity="0.7"
+                           Opacity="0.6"
                            Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
             </StackPanel>
             
@@ -49,8 +56,7 @@
                     Margin="8,0,4,0"
                     VerticalAlignment="Center"
                     ToolTip="View changes in diff viewer"
-                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                    Style="{DynamicResource CopilotSecondaryButton}"/>
             
             <!-- Keep Button -->
             <Button Grid.Column="3"
@@ -61,8 +67,7 @@
                     Margin="0,0,4,0"
                     VerticalAlignment="Center"
                     ToolTip="Apply this change"
-                    Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"
-                    Foreground="White"/>
+                    Style="{DynamicResource CopilotPrimaryButton}"/>
             
             <!-- Undo Button -->
             <Button Grid.Column="4"
@@ -72,8 +77,7 @@
                     Padding="8,4"
                     VerticalAlignment="Center"
                     ToolTip="Discard this change"
-                    Background="{DynamicResource {x:Static vsshell:VsBrushes.ButtonFaceKey}}"
-                    Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ButtonTextKey}}"/>
+                    Style="{DynamicResource CopilotSecondaryButton}"/>
         </Grid>
     </Border>
 </UserControl>

@@ -99,6 +99,16 @@ namespace OllamaLocalHostIntergration
             // Handle Enter key in the input box
             txtUserInput.KeyDown += TxtUserInputKeyDown;
 
+            // Input border focus effect
+            txtUserInput.GotFocus += (s, ev) => {
+                inputBorder.BorderBrush = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.AccentMediumKey);
+                inputBorder.BorderThickness = new Thickness(1.5);
+            };
+            txtUserInput.LostFocus += (s, ev) => {
+                inputBorder.BorderBrush = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.CommandBarBorderKey);
+                inputBorder.BorderThickness = new Thickness(1);
+            };
+
             // Subscribe to mode changes
             _modeManager.OnModeChanged += OnModeChanged;
 
@@ -332,35 +342,35 @@ namespace OllamaLocalHostIntergration
                 string language = await _codeEditorService.GetActiveDocumentLanguageAsync();
 
                 // Phase 6.1+: Show spinning loading animation ONLY (no chat messages)
-                ShowLoadingSpinner(true, "💭 AI is thinking...");
+                ShowLoadingSpinner(true, "AI is thinking...");
                 
                 // Update status bar with progressive steps
-                txtStatusBar.Text = "🔄 Preparing request...";
+                txtStatusBar.Text = "Preparing request...";
                 await Task.Delay(100);
                 
                 if (!string.IsNullOrEmpty(codeContext))
                 {
-                    txtStatusBar.Text = "📝 Analyzing code context...";
+                    txtStatusBar.Text = "Analyzing code context...";
                     await Task.Delay(100);
                 }
                 
                 if (_modeManager.IsAgentMode)
                 {
-                    txtStatusBar.Text = "🤖 Agent mode: Planning code modifications...";
-                    ShowLoadingSpinner(true, "🤖 Planning modifications...");
+                    txtStatusBar.Text = "Agent mode: Planning code modifications...";
+                    ShowLoadingSpinner(true, "Planning modifications...");
                 }
                 else
                 {
-                    txtStatusBar.Text = "💬 Ask mode: Preparing explanation...";
-                    ShowLoadingSpinner(true, "💬 Preparing explanation...");
+                    txtStatusBar.Text = "Ask mode: Preparing explanation...";
+                    ShowLoadingSpinner(true, "Preparing explanation...");
                 }
                 await Task.Delay(100);
                 
-                txtStatusBar.Text = "🔄 Sending to AI model...";
+                txtStatusBar.Text = "Sending to AI model...";
                 await Task.Delay(100);
                 
-                ShowLoadingSpinner(true, "💭 AI is thinking...");
-                txtStatusBar.Text = "💭 Receiving response...";
+                ShowLoadingSpinner(true, "AI is thinking...");
+                txtStatusBar.Text = "Receiving response...";
                 
                 // Create streaming message that will appear word-by-word
                 var streamingMessage = new ChatMessage("", false);
@@ -426,9 +436,8 @@ namespace OllamaLocalHostIntergration
                     {
                         // Phase 6.1: Show that we're processing the code
                         processingCodeEdit = true;
-                        txtStatusBar.Text = "🔍 Analyzing code changes...";
-                        
-                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(fullResponse, codeContext);
+                        txtStatusBar.Text = "Analyzing code changes...";
+                        var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(fullResponse, null);
                         if (codeEdit != null)
                         {
                             responseChatMessage.AssociatedCodeEdit = codeEdit;
@@ -436,7 +445,7 @@ namespace OllamaLocalHostIntergration
                             _modeManager.AddPendingEdit(codeEdit);
                             
                             // Phase 6.1: Success feedback
-                            txtStatusBar.Text = "✅ Code changes ready to apply";
+                            txtStatusBar.Text = "Code changes ready to apply";
                         }
                     }
                     catch
@@ -466,8 +475,8 @@ namespace OllamaLocalHostIntergration
                 if (!processingCodeEdit)
                 {
                     txtStatusBar.Text = responseChatMessage.HasCodeBlocks 
-                        ? $"✅ Done! ({responseChatMessage.CodeBlocks.Count} code block(s), {tokenCount} tokens)" 
-                        : $"✅ Done! ({tokenCount} tokens)";
+                        ? $"Done ({responseChatMessage.CodeBlocks.Count} code block(s), {tokenCount} tokens)" 
+                        : $"Done ({tokenCount} tokens)";
                 }
                 
                 // Update token count
@@ -487,11 +496,10 @@ namespace OllamaLocalHostIntergration
                     }
                 }
                 
-                // Phase 6.1: Better error message with emoji
-                var errorMessage = new ChatMessage($"❌ Error: {ex.Message}", false);
+                var errorMessage = new ChatMessage($"Error: {ex.Message}", false);
                 _chatMessages.Add(errorMessage);
                 _currentConversation.Messages.Add(errorMessage);
-                txtStatusBar.Text = $"❌ Error: {ex.Message}";
+                txtStatusBar.Text = $"Error: {ex.Message}";
             }
 
             // Scroll to bottom
@@ -775,15 +783,15 @@ namespace OllamaLocalHostIntergration
                 _currentConversation.Messages.Add(userChatMessage);
 
                 // Phase 6.1+: Show ONLY spinner (no chat messages)
-                ShowLoadingSpinner(true, "🔄 Analyzing code structure...");
+                ShowLoadingSpinner(true, "Analyzing code structure...");
                 txtStatusBar.Text = "Analyzing code structure...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "📝 Understanding code logic...");
+                ShowLoadingSpinner(true, "Understanding code logic...");
                 txtStatusBar.Text = "Understanding code logic...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "💭 Preparing explanation...");
+                ShowLoadingSpinner(true, "Preparing explanation...");
                 txtStatusBar.Text = "Preparing explanation...";
                 chatMessagesScroll?.ScrollToBottom();
 
@@ -802,7 +810,7 @@ namespace OllamaLocalHostIntergration
                 // Save conversation
                 await _conversationHistory.SaveConversationAsync(_currentConversation);
                 
-                txtStatusBar.Text = "✅ Explanation complete";
+                txtStatusBar.Text = "Explanation complete";
                 chatMessagesScroll.ScrollToBottom();
             }
             catch (Exception ex)
@@ -810,7 +818,7 @@ namespace OllamaLocalHostIntergration
                 // Phase 6.1+: Hide spinner on error
                 ShowLoadingSpinner(false);
                 
-                txtStatusBar.Text = $"❌ Error: {ex.Message}";
+                txtStatusBar.Text = $"Error: {ex.Message}";
             }
         }
 
@@ -832,15 +840,15 @@ namespace OllamaLocalHostIntergration
                 _currentConversation.Messages.Add(userChatMessage);
 
                 // Phase 6.1+: Show ONLY spinner (no chat messages)
-                ShowLoadingSpinner(true, "🔄 Analyzing code patterns...");
+                ShowLoadingSpinner(true, "Analyzing code patterns...");
                 txtStatusBar.Text = "Analyzing code patterns...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "🤖 Planning improvements...");
+                ShowLoadingSpinner(true, "Planning improvements...");
                 txtStatusBar.Text = "Planning improvements...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "⚡ Generating refactored code...");
+                ShowLoadingSpinner(true, "Generating refactored code...");
                 txtStatusBar.Text = "Generating refactored code...";
                 chatMessagesScroll?.ScrollToBottom();
 
@@ -860,7 +868,7 @@ namespace OllamaLocalHostIntergration
                     try
                     {
                         // Show processing status
-                        txtStatusBar.Text = "🔍 Analyzing code changes...";
+                        txtStatusBar.Text = "Analyzing code changes...";
                         
                         var codeEdit = await _codeModService.CreateCodeEditFromResponseAsync(response, code);
                         if (codeEdit != null)
@@ -868,7 +876,7 @@ namespace OllamaLocalHostIntergration
                             responseChatMessage.AssociatedCodeEdit = codeEdit;
                             responseChatMessage.IsApplicable = true;
                             _modeManager.AddPendingEdit(codeEdit);
-                            txtStatusBar.Text = "✅ Refactoring ready to apply";
+                            txtStatusBar.Text = "Refactoring ready to apply";
                         }
                     }
                     catch { }
@@ -882,7 +890,7 @@ namespace OllamaLocalHostIntergration
                 
                 if (!responseChatMessage.IsApplicable)
                 {
-                    txtStatusBar.Text = "✅ Refactoring suggestions ready";
+                    txtStatusBar.Text = "Refactoring suggestions ready";
                 }
                 chatMessagesScroll.ScrollToBottom();
             }
@@ -891,7 +899,7 @@ namespace OllamaLocalHostIntergration
                 // Phase 6.1+: Hide spinner on error
                 ShowLoadingSpinner(false);
                 
-                txtStatusBar.Text = $"❌ Error: {ex.Message}";
+                txtStatusBar.Text = $"Error: {ex.Message}";
             }
         }
 
@@ -913,15 +921,15 @@ namespace OllamaLocalHostIntergration
                 _currentConversation.Messages.Add(userChatMessage);
 
                 // Phase 6.1+: Show ONLY spinner (no chat messages)
-                ShowLoadingSpinner(true, "🔄 Scanning code for issues...");
+                ShowLoadingSpinner(true, "Scanning code for issues...");
                 txtStatusBar.Text = "Scanning code for issues...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "🐛 Checking for bugs...");
+                ShowLoadingSpinner(true, "Checking for bugs...");
                 txtStatusBar.Text = "Checking for bugs and vulnerabilities...";
                 await Task.Delay(150);
                 
-                ShowLoadingSpinner(true, "💡 Analyzing best practices...");
+                ShowLoadingSpinner(true, "Analyzing best practices...");
                 txtStatusBar.Text = "Analyzing best practices...";
                 chatMessagesScroll?.ScrollToBottom();
 
@@ -940,7 +948,7 @@ namespace OllamaLocalHostIntergration
                 // Save conversation
                 await _conversationHistory.SaveConversationAsync(_currentConversation);
                 
-                txtStatusBar.Text = "✅ Analysis complete";
+                txtStatusBar.Text = "Analysis complete";
                 chatMessagesScroll.ScrollToBottom();
             }
             catch (Exception ex)
@@ -948,7 +956,7 @@ namespace OllamaLocalHostIntergration
                 // Phase 6.1+: Hide spinner on error
                 ShowLoadingSpinner(false);
                 
-                txtStatusBar.Text = $"❌ Error: {ex.Message}";
+                txtStatusBar.Text = $"Error: {ex.Message}";
             }
         }
         /// <summary>

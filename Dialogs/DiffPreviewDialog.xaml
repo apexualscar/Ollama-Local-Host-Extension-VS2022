@@ -10,25 +10,30 @@
         ShowInTaskbar="False"
         ResizeMode="CanResize">
     <Window.Resources>
-        <Style x:Key="HeaderStyle" TargetType="TextBlock">
-            <Setter Property="FontWeight" Value="SemiBold"/>
-            <Setter Property="FontSize" Value="12"/>
-            <Setter Property="Margin" Value="0,0,0,8"/>
-            <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-        </Style>
-        
-        <Style x:Key="CodeTextBoxStyle" TargetType="TextBox">
-            <Setter Property="FontFamily" Value="Consolas"/>
-            <Setter Property="FontSize" Value="11"/>
-            <Setter Property="IsReadOnly" Value="True"/>
-            <Setter Property="BorderThickness" Value="1"/>
-            <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
-            <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
-            <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
-            <Setter Property="Padding" Value="10"/>
-            <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-        </Style>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/OllamaLocalHostIntergration;component/Styles/CopilotStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+            <Style x:Key="HeaderStyle" TargetType="TextBlock">
+                <Setter Property="FontWeight" Value="SemiBold"/>
+                <Setter Property="FontSize" Value="12"/>
+                <Setter Property="Margin" Value="0,0,0,8"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
+            </Style>
+            
+            <Style x:Key="CodeTextBoxStyle" TargetType="TextBox">
+                <Setter Property="FontFamily" Value="Consolas"/>
+                <Setter Property="FontSize" Value="11"/>
+                <Setter Property="IsReadOnly" Value="True"/>
+                <Setter Property="BorderThickness" Value="1"/>
+                <Setter Property="BorderBrush" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+                <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
+                <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+                <Setter Property="Padding" Value="10"/>
+                <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
+                <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
+            </Style>
+        </ResourceDictionary>
     </Window.Resources>
     
     <Grid Margin="16">
@@ -128,14 +133,15 @@
                     Width="100"
                     Height="32"
                     Margin="0,0,8,0"
-                    Click="Cancel_Click"/>
+                    Padding="12,6"
+                    Click="Cancel_Click"
+                    Style="{DynamicResource CopilotSecondaryButton}"/>
             <Button Content="Apply Changes"
                     Width="120"
                     Height="32"
+                    Padding="12,6"
                     Click="Apply_Click"
-                    Background="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"
-                    Foreground="White"
-                    FontWeight="SemiBold"/>
+                    Style="{DynamicResource CopilotPrimaryButton}"/>
         </StackPanel>
     </Grid>
 </Window>

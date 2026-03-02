@@ -7,6 +7,13 @@
              Width="500"
              Height="400"
              Background="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowBackgroundKey}}">
+    <UserControl.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/OllamaLocalHostIntergration;component/Styles/CopilotStyles.xaml"/>
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </UserControl.Resources>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -39,12 +46,9 @@
                 
                 <!-- Active Document -->
                 <Button Click="ActiveDocument_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8A5;"
                                    FontFamily="Segoe MDL2 Assets"
@@ -67,12 +71,9 @@
 
                 <!-- Selection -->
                 <Button Click="Selection_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8E6;"
                                    FontFamily="Segoe MDL2 Assets"
@@ -95,12 +96,9 @@
 
                 <!-- Whole Solution -->
                 <Button Click="WholeSolution_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,16"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8F1;"
                                    FontFamily="Segoe MDL2 Assets"
@@ -130,12 +128,9 @@
 
                 <!-- Search Files -->
                 <Button Click="SearchFiles_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8A5;"
                                    FontFamily="Segoe MDL2 Assets"
@@ -158,12 +153,9 @@
 
                 <!-- Search Classes -->
                 <Button Click="SearchClasses_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8D3;"
                                    FontFamily="Segoe MDL2 Assets"
@@ -186,12 +178,9 @@
 
                 <!-- Search Methods -->
                 <Button Click="SearchMethods_Click"
-                        HorizontalContentAlignment="Left"
                         Padding="16,12"
                         Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1">
+                        Style="{DynamicResource CopilotOptionCard}">
                     <StackPanel Orientation="Horizontal">
                         <TextBlock Text="&#xE8E3;"
                                    FontFamily="Segoe MDL2 Assets"
