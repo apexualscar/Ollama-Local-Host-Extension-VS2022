@@ -85,6 +85,7 @@
     <Compile Include="Services\CodeEditorService.cs" />
     <Compile Include="Services\CodeModificationService.cs" />
     <Compile Include="Services\CodeSearchService.cs" />
+    <Compile Include="Services\SolutionCacheService.cs" />
     <Compile Include="Services\ConversationHistoryService.cs" />
     <Compile Include="Services\FileContextService.cs" />
     <Compile Include="Services\MessageParserService.cs" />

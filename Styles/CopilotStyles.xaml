@@ -229,4 +229,73 @@
         <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowKey}}"/>
     </Style>
 
+    <!-- ─── VS-Themed ContextMenu ─── -->
+    <Style x:Key="CopilotContextMenu" TargetType="ContextMenu">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="SnapsToDevicePixels" Value="True"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ContextMenu">
+                    <Border x:Name="Border"
+                            Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
+                            BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
+                            BorderThickness="1"
+                            CornerRadius="4"
+                            Padding="0,4">
+                        <Border.Effect>
+                            <DropShadowEffect ShadowDepth="3" Opacity="0.3" BlurRadius="8"/>
+                        </Border.Effect>
+                        <StackPanel IsItemsHost="True" KeyboardNavigation.DirectionalNavigation="Cycle"/>
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ─── VS-Themed MenuItem ─── -->
+    <Style x:Key="CopilotMenuItem" TargetType="MenuItem">
+        <Setter Property="OverridesDefaultStyle" Value="True"/>
+        <Setter Property="Foreground" Value="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
+        <Setter Property="FontSize" Value="12"/>
+        <Setter Property="Cursor" Value="Hand"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="MenuItem">
+                    <Border x:Name="Bd"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="2,0,0,0"
+                            Padding="10,6"
+                            MinWidth="180">
+                        <ContentPresenter ContentSource="Header" RecognizesAccessKey="True"/>
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <Trigger Property="IsHighlighted" Value="True">
+                            <Setter TargetName="Bd" Property="Background"
+                                    Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMouseOverBackgroundGradientKey}}"/>
+                            <Setter TargetName="Bd" Property="BorderBrush"
+                                    Value="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                        </Trigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ─── VS-Themed Separator inside menus ─── -->
+    <Style x:Key="CopilotMenuSeparator" TargetType="Separator">
+        <Setter Property="Height" Value="1"/>
+        <Setter Property="Margin" Value="8,4"/>
+        <Setter Property="Background" Value="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"/>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Separator">
+                    <Border Background="{TemplateBinding Background}"
+                            Height="{TemplateBinding Height}"
+                            Margin="{TemplateBinding Margin}"/>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
 </ResourceDictionary>

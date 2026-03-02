@@ -331,71 +331,55 @@
                 </Border>
                 
                 
-                <!-- NEW: Context References Section -->
-                <Border Grid.Row="2"
-                        x:Name="contextReferencesPanel"
-                        BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
-                        BorderThickness="1"
-                        CornerRadius="4"
-                        Padding="10"
-                        Margin="0,0,0,8"
-                        Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
+                <!-- Context References Section -->
+                <StackPanel Grid.Row="2" x:Name="contextReferencesPanel" Margin="0,0,0,4">
+                    <!-- Header row: Context summary + Add Context -->
+                    <Grid Margin="0,0,0,4">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto"/>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
                         
-                        <!-- Header with Add Button -->
-                        <Grid Grid.Row="0" Margin="0,0,0,8">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="Auto"/>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="Auto"/>
-                            </Grid.ColumnDefinitions>
-                            
-                            <TextBlock Grid.Column="0"
-                                       Text="Context:"
-                                       FontSize="11"
-                                       FontWeight="SemiBold"
-                                       VerticalAlignment="Center"
-                                       Margin="0,0,8,0"
-                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                            
+                        <TextBlock Grid.Column="0"
+                                   Text="Context:"
+                                   FontSize="11"
+                                   FontWeight="SemiBold"
+                                   VerticalAlignment="Center"
+                                   Margin="0,0,6,0"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
 
-                            <TextBlock Grid.Column="1"
-                                       x:Name="txtContextSummary"
-                                       Text="No context added"
-                                       FontSize="10"
-                                       VerticalAlignment="Center"
-                                       Opacity="0.7"
-                                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
-                            
-                            <Button Grid.Column="2"
-                                    Content="+ Add Context"
-                                    Click="AddContextClick"
-                                    FontSize="10"
-                                    Padding="8,4"
-                                    VerticalAlignment="Center"
-                                    Style="{DynamicResource CopilotSecondaryButton}"/>
-                        </Grid>
+                        <TextBlock Grid.Column="1"
+                                   x:Name="txtContextSummary"
+                                   Text="No context added"
+                                   FontSize="10"
+                                   VerticalAlignment="Center"
+                                   Opacity="0.7"
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
                         
-                        <!-- Context Chips -->
-                        <ItemsControl Grid.Row="1"
-                                      x:Name="contextChipsPanel">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <WrapPanel Orientation="Horizontal"/>
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate>
-                                    <controls:ContextChipControl DataContext="{Binding}"/>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
+                        <Button Grid.Column="2"
+                                Content="+ Add Context"
+                                Click="AddContextClick"
+                                FontSize="10"
+                                Padding="8,3"
+                                VerticalAlignment="Center"
+                                Style="{DynamicResource CopilotSecondaryButton}"/>
                     </Grid>
-                </Border>
+                    
+                    <!-- Context Chips (inline, no box) -->
+                    <ItemsControl x:Name="contextChipsPanel">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel Orientation="Horizontal"/>
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <controls:ContextChipControl DataContext="{Binding}"/>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
                 
                 <!-- NEW: Pending Changes Section (Phase 5.5.3) -->
                 <Border Grid.Row="3"

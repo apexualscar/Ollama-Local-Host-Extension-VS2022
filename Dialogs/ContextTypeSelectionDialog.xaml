@@ -55,7 +55,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Active Document"
                                        FontSize="13"
@@ -80,7 +80,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Selection"
                                        FontSize="13"
@@ -105,7 +105,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Whole Solution"
                                        FontSize="13"
@@ -137,7 +137,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Search Files"
                                        FontSize="13"
@@ -162,7 +162,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Search Classes"
                                        FontSize="13"
@@ -187,7 +187,7 @@
                                    FontSize="20"
                                    Margin="0,0,12,0"
                                    VerticalAlignment="Center"
-                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                                   Foreground="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"/>
                         <StackPanel>
                             <TextBlock Text="Search Methods"
                                        FontSize="13"

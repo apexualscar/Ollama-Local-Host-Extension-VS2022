@@ -14,208 +14,149 @@ namespace OllamaLocalHostIntergration.Dialogs
 {
     public partial class ContextSearchDialog : UserControl
     {
-        private readonly CodeSearchService _searchService;
+        private readonly SolutionCacheService _cache;
+        private readonly CodeSearchService _searchService;   // still used for GetElementContentAsync
         private readonly PromptBuilder _promptBuilder;
-        private ObservableCollection<SearchResultViewModel> _searchResults;
+        private ObservableCollection<CachedItemViewModel> _searchResults;
         private System.Threading.CancellationTokenSource _searchCts;
-        private string _filterType; // Phase 6.5: Filter by type
+        private string _filterType;
 
         public event EventHandler<ContextReference> ContextSelected;
 
         public ContextSearchDialog(string filterType = null)
         {
             InitializeComponent();
-            
+
+            _cache = SolutionCacheService.Instance;
             _searchService = new CodeSearchService();
             _promptBuilder = new PromptBuilder();
-            _searchResults = new ObservableCollection<SearchResultViewModel>();
-            _filterType = filterType; // Phase 6.5: Store filter
-            
+            _searchResults = new ObservableCollection<CachedItemViewModel>();
+            _filterType = filterType;
+
             resultsPanel.ItemsSource = _searchResults;
-            
-            // Phase 6.5: Update placeholder based on filter
+
             UpdatePlaceholder();
-            
-            System.Diagnostics.Debug.WriteLine($"[ContextSearch] Initialized with filter: {filterType ?? "None"}");
+
+            // Purple accent focus ring on search box
+            txtSearch.GotFocus += (s, ev) => {
+                searchBorder.BorderBrush = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.AccentMediumKey);
+                searchBorder.BorderThickness = new Thickness(1.5);
+            };
+            txtSearch.LostFocus += (s, ev) => {
+                searchBorder.BorderBrush = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.ComboBoxBorderKey);
+                searchBorder.BorderThickness = new Thickness(1);
+            };
+
+            System.Diagnostics.Debug.WriteLine($"[ContextSearch] Initialized with filter: {filterType ?? "None"}, cache has items: {!_cache.IsBuilding}");
         }
 
-        /// <summary>
-        /// Phase 6.5: Update placeholder text based on filter
-        /// </summary>
         private void UpdatePlaceholder()
         {
             string placeholder = _filterType switch
             {
-                "File" => "Type at least 2 characters to search files...",
-                "Class" => "Type at least 2 characters to search classes...",
-                "Method" => "Type at least 2 characters to search methods...",
-                _ => "Type at least 2 characters to search files, classes, methods..."
+                "File" => "Search files...",
+                "Class" => "Search classes...",
+                "Method" => "Search methods...",
+                _ => "Search files, classes, methods..."
             };
-            
             txtPlaceholder.Text = placeholder;
         }
 
         /// <summary>
-        /// Load initial search results - Phase 6.3 FIX: Show helpful message, don't load anything
-        /// </summary>
-        private async Task LoadInitialResultsAsync()
-        {
-            try
-            {
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                
-                // Phase 6.3 FIX: Don't load anything - just show placeholder
-                _searchResults.Clear();
-                
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Ready - waiting for user input");
-            }
-            catch (Exception ex)
-            {
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Error: {ex.Message}");
-            }
-        }
-
-        /// <summary>
-        /// Handle search text changes
+        /// Handle search text changes — queries the in-memory cache (instant).
         /// </summary>
         private async void TxtSearch_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Update placeholder visibility
-            txtPlaceholder.Visibility = string.IsNullOrEmpty(txtSearch.Text) 
-                ? Visibility.Visible 
+            txtPlaceholder.Visibility = string.IsNullOrEmpty(txtSearch.Text)
+                ? Visibility.Visible
                 : Visibility.Collapsed;
 
-            // Cancel previous search
             _searchCts?.Cancel();
             _searchCts = new System.Threading.CancellationTokenSource();
             var token = _searchCts.Token;
 
             var searchTerm = txtSearch.Text?.Trim();
-            
-            // Phase 6.3 FIX: Require at least 2 characters to search
+
             if (string.IsNullOrEmpty(searchTerm) || searchTerm.Length < 2)
             {
                 _searchResults.Clear();
                 return;
             }
 
-            // Debounce search - wait for user to stop typing
-            try
-            {
-                await Task.Delay(400, token); // Slightly longer delay for better debouncing
-            }
-            catch (System.Threading.Tasks.TaskCanceledException)
-            {
-                return;
-            }
-            catch (System.OperationCanceledException)
-            {
-                return;
-            }
-            
-            if (token.IsCancellationRequested)
-                return;
+            // Small debounce so we don't refresh on every keystroke
+            try { await Task.Delay(150, token); }
+            catch (OperationCanceledException) { return; }
+            if (token.IsCancellationRequested) return;
 
-            await PerformSearchAsync(searchTerm);
+            PerformCachedSearch(searchTerm);
         }
 
         /// <summary>
-        /// Perform search - Phase 6.3 FIX: Async on background thread with filtering
+        /// Pure in-memory search against the SolutionCacheService.
         /// </summary>
-        private async Task PerformSearchAsync(string searchTerm)
+        private void PerformCachedSearch(string searchTerm)
         {
             try
             {
-                ShowLoading(true);
-                
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Searching for: {searchTerm} (Filter: {_filterType ?? "None"})");
-                
-                // Phase 6.5: Run search on background thread with filter
-                var results = await Task.Run(async () =>
-                {
-                    var allResults = await _searchService.SearchSolutionAsync(searchTerm);
-                    
-                    // Phase 6.5: Filter results by type if specified
-                    if (!string.IsNullOrEmpty(_filterType))
-                    {
-                        allResults = allResults.Where(r => 
-                        {
-                            return _filterType switch
-                            {
-                                "File" => r.Type == CodeSearchService.SearchResultType.File,
-                                "Class" => r.Type == CodeSearchService.SearchResultType.Class || 
-                                          r.Type == CodeSearchService.SearchResultType.Interface,
-                                "Method" => r.Type == CodeSearchService.SearchResultType.Method || 
-                                           r.Type == CodeSearchService.SearchResultType.Property,
-                                _ => true
-                            };
-                        }).ToList();
-                    }
-                    
-                    return allResults;
-                });
-                
-                await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
-                
+                var results = _cache.Search(searchTerm, _filterType, 100);
+
                 _searchResults.Clear();
-                
-                // Phase 6.5: Limit results to 100 for performance
-                int count = 0;
-                foreach (var result in results)
+                foreach (var item in results)
                 {
-                    if (count >= 100) break;
-                    _searchResults.Add(new SearchResultViewModel(result));
-                    count++;
+                    _searchResults.Add(new CachedItemViewModel(item));
                 }
-                
-                ShowLoading(false);
-                
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Found {_searchResults.Count} results (filtered by {_filterType ?? "None"})");
+
+                System.Diagnostics.Debug.WriteLine(
+                    $"[ContextSearch] Cache search '{searchTerm}' => {results.Count} results");
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Search error: {ex.Message}");
-                ShowLoading(false);
+                System.Diagnostics.Debug.WriteLine($"[ContextSearch] Cache search error: {ex.Message}");
             }
         }
 
         /// <summary>
-        /// Phase 6.3: Handle ListBox selection changed (replaces button click)
+        /// Handle selection — loads content then raises ContextSelected.
         /// </summary>
         private async void ResultsPanel_SelectionChanged(object sender, WpfSelectionChangedEventArgs e)
         {
-            if (resultsPanel.SelectedItem is SearchResultViewModel viewModel)
+            if (resultsPanel.SelectedItem is CachedItemViewModel viewModel)
             {
-                // Deselect immediately to allow reselecting same item
                 resultsPanel.SelectedItem = null;
-                
+
                 try
                 {
                     ShowLoading(true);
-                    
-                    // Get content for the selected item
-                    var content = await _searchService.GetElementContentAsync(viewModel.SearchResult);
+
+                    // Build a lightweight CodeSearchService.SearchResult for content extraction
+                    var sr = new CodeSearchService.SearchResult
+                    {
+                        DisplayName = viewModel.Item.DisplayName,
+                        FilePath = viewModel.Item.FilePath,
+                        ProjectName = viewModel.Item.ProjectName,
+                        ClassName = viewModel.Item.ClassName,
+                        MethodName = viewModel.Item.MethodName,
+                        LineNumber = viewModel.Item.LineNumber,
+                        Type = MapCachedType(viewModel.Item.Type)
+                    };
+
+                    var content = await _searchService.GetElementContentAsync(sr);
                     var tokenCount = _promptBuilder.EstimateTokenCount(content);
 
-                    // Create context reference
                     var contextRef = new ContextReference
                     {
-                        Type = MapSearchResultType(viewModel.SearchResult.Type),
+                        Type = MapToContextType(viewModel.Item.Type),
                         DisplayText = viewModel.DisplayName,
-                        FilePath = viewModel.SearchResult.FilePath,
-                        ClassName = viewModel.SearchResult.ClassName,
-                        MethodName = viewModel.SearchResult.MethodName,
-                        ProjectName = viewModel.SearchResult.ProjectName,
+                        FilePath = viewModel.Item.FilePath,
+                        ClassName = viewModel.Item.ClassName,
+                        MethodName = viewModel.Item.MethodName,
+                        ProjectName = viewModel.Item.ProjectName,
                         Content = content,
                         TokenCount = tokenCount
                     };
 
-                    // Raise event
                     ContextSelected?.Invoke(this, contextRef);
-                    
                     ShowLoading(false);
-                    
-                    System.Diagnostics.Debug.WriteLine($"[ContextSearch] Selected: {contextRef.DisplayText}");
                 }
                 catch (Exception ex)
                 {
@@ -225,158 +166,70 @@ namespace OllamaLocalHostIntergration.Dialogs
             }
         }
 
-        /// <summary>
-        /// Handle active document quick action
-        /// </summary>
         private void ActiveDocument_Click(object sender, RoutedEventArgs e)
         {
-            // Close and signal active document selection
-            var contextRef = new ContextReference
+            ContextSelected?.Invoke(this, new ContextReference
             {
                 Type = ContextReferenceType.File,
                 DisplayText = "Active Document"
-            };
-            
-            ContextSelected?.Invoke(this, contextRef);
+            });
         }
 
-        /// <summary>
-        /// Handle selection quick action
-        /// </summary>
         private void Selection_Click(object sender, RoutedEventArgs e)
         {
-            // Close and signal selection
-            var contextRef = new ContextReference
+            ContextSelected?.Invoke(this, new ContextReference
             {
                 Type = ContextReferenceType.Selection,
                 DisplayText = "Selection"
-            };
-            
-            ContextSelected?.Invoke(this, contextRef);
+            });
         }
 
-        /// <summary>
-        /// Close dialog
-        /// </summary>
         private void Close_Click(object sender, RoutedEventArgs e)
         {
-            // Find parent window and close
-            var window = Window.GetWindow(this);
-            window?.Close();
+            Window.GetWindow(this)?.Close();
         }
 
-        /// <summary>
-        /// Show/hide loading indicator
-        /// </summary>
         private void ShowLoading(bool show)
         {
             txtLoading.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
         }
 
-        /// <summary>
-        /// Map search result type to context reference type
-        /// </summary>
-        private ContextReferenceType MapSearchResultType(CodeSearchService.SearchResultType type)
+        // ── Mapping helpers ────────────────────────────────────────
+
+        private static CodeSearchService.SearchResultType MapCachedType(SolutionCacheService.CachedItemType t) => t switch
         {
-            switch (type)
-            {
-                case CodeSearchService.SearchResultType.File:
-                    return ContextReferenceType.File;
-                case CodeSearchService.SearchResultType.Class:
-                case CodeSearchService.SearchResultType.Interface:
-                    return ContextReferenceType.Class;
-                case CodeSearchService.SearchResultType.Method:
-                case CodeSearchService.SearchResultType.Property:
-                    return ContextReferenceType.Method;
-                case CodeSearchService.SearchResultType.Project:
-                    return ContextReferenceType.Project;
-                default:
-                    return ContextReferenceType.File;
-            }
-        }
+            SolutionCacheService.CachedItemType.File => CodeSearchService.SearchResultType.File,
+            SolutionCacheService.CachedItemType.Class => CodeSearchService.SearchResultType.Class,
+            SolutionCacheService.CachedItemType.Interface => CodeSearchService.SearchResultType.Interface,
+            SolutionCacheService.CachedItemType.Method => CodeSearchService.SearchResultType.Method,
+            SolutionCacheService.CachedItemType.Property => CodeSearchService.SearchResultType.Property,
+            _ => CodeSearchService.SearchResultType.File
+        };
+
+        private static ContextReferenceType MapToContextType(SolutionCacheService.CachedItemType t) => t switch
+        {
+            SolutionCacheService.CachedItemType.File => ContextReferenceType.File,
+            SolutionCacheService.CachedItemType.Class => ContextReferenceType.Class,
+            SolutionCacheService.CachedItemType.Interface => ContextReferenceType.Class,
+            SolutionCacheService.CachedItemType.Method => ContextReferenceType.Method,
+            SolutionCacheService.CachedItemType.Property => ContextReferenceType.Method,
+            _ => ContextReferenceType.File
+        };
     }
 
     /// <summary>
-    /// View model for search results
+    /// Thin view model wrapping a CachedItem for data binding in the search ListBox.
+    /// Exposes the same property names the XAML DataTemplate expects.
     /// </summary>
-    public class SearchResultViewModel
+    public class CachedItemViewModel
     {
-        public CodeSearchService.SearchResult SearchResult { get; }
+        public SolutionCacheService.CachedItem Item { get; }
 
-        public SearchResultViewModel(CodeSearchService.SearchResult result)
-        {
-            SearchResult = result;
-        }
+        public CachedItemViewModel(SolutionCacheService.CachedItem item) => Item = item;
 
-        public string DisplayName => SearchResult.DisplayName;
-
-        public string Details
-        {
-            get
-            {
-                if (!string.IsNullOrEmpty(SearchResult.ProjectName) && !string.IsNullOrEmpty(SearchResult.FilePath))
-                {
-                    var fileName = System.IO.Path.GetFileName(SearchResult.FilePath);
-                    return $"{SearchResult.ProjectName} � {fileName}";
-                }
-                else if (!string.IsNullOrEmpty(SearchResult.ProjectName))
-                {
-                    return SearchResult.ProjectName;
-                }
-                else if (!string.IsNullOrEmpty(SearchResult.FilePath))
-                {
-                    return SearchResult.FilePath;
-                }
-                return "";
-            }
-        }
-
-        public string TypeLabel
-        {
-            get
-            {
-                switch (SearchResult.Type)
-                {
-                    case CodeSearchService.SearchResultType.File:
-                        return "FILE";
-                    case CodeSearchService.SearchResultType.Class:
-                        return "CLASS";
-                    case CodeSearchService.SearchResultType.Interface:
-                        return "INTERFACE";
-                    case CodeSearchService.SearchResultType.Method:
-                        return "METHOD";
-                    case CodeSearchService.SearchResultType.Property:
-                        return "PROPERTY";
-                    case CodeSearchService.SearchResultType.Project:
-                        return "PROJECT";
-                    default:
-                        return ""; // Phase 6.3: Return empty string instead of unknown
-                }
-            }
-        }
-
-        public string Icon
-        {
-            get
-            {
-                switch (SearchResult.Type)
-                {
-                    case CodeSearchService.SearchResultType.File:
-                        return "\uE8A5"; // Document
-                    case CodeSearchService.SearchResultType.Class:
-                        return "\uE8D3"; // Class
-                    case CodeSearchService.SearchResultType.Interface:
-                        return "\uE8D4"; // Interface
-                    case CodeSearchService.SearchResultType.Method:
-                        return "\uE8E3"; // Method
-                    case CodeSearchService.SearchResultType.Property:
-                        return "\uE8B9"; // Property
-                    case CodeSearchService.SearchResultType.Project:
-                        return "\uE8F1"; // Project
-                    default:
-                        return "\uE8A5";
-                }
-            }
-        }
+        public string DisplayName => Item.DisplayName;
+        public string Details => Item.Details;
+        public string TypeLabel => Item.TypeLabel;
+        public string Icon => Item.Icon;
     }
 }

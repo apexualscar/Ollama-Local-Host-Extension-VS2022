@@ -61,6 +61,10 @@ namespace OllamaLocalHostIntergration
             
             // Initialize component FIRST to create UI elements
             InitializeComponent();
+
+            // Initialize solution cache (pre-indexes files/classes/methods for fast search)
+            Microsoft.VisualStudio.Shell.ThreadHelper.ThrowIfNotOnUIThread();
+            SolutionCacheService.Instance.Initialize();
             
             // Then bind collections to UI elements
             chatMessagesPanel.ItemsSource = _chatMessages;
@@ -1145,69 +1149,96 @@ namespace OllamaLocalHostIntergration
         #region Context References (Phase 5.5.2)
 
         /// <summary>
-        /// Shows context type selection dialog (Phase 6.5 - Pre-filter by type)
+        /// Shows context type selection as a compact dropdown menu (like VS Copilot references)
         /// </summary>
         private async void AddContextClick(object sender, RoutedEventArgs e)
         {
             try
             {
-                // Phase 6.5: Show type selection first
-                var typeDialog = new Dialogs.ContextTypeSelectionDialog();
-                
-                typeDialog.TypeSelected += async (s, selectedType) =>
+                var button = sender as System.Windows.Controls.Button;
+                if (button == null) return;
+
+                // Load VS-themed styles from the merged resource dictionary
+                var menuStyle = (Style)FindResource("CopilotContextMenu");
+                var itemStyle = (Style)FindResource("CopilotMenuItem");
+                var separatorStyle = (Style)FindResource("CopilotMenuSeparator");
+
+                var menu = new System.Windows.Controls.ContextMenu
                 {
-                    // Close the type selection dialog
-                    var typeWindow = System.Windows.Window.GetWindow(typeDialog);
-                    typeWindow?.Close();
-                    
-                    // Handle the selected type
-                    switch (selectedType)
-                    {
-                        case "ActiveDocument":
-                            await AddActiveDocumentContextAsync();
-                            break;
-                            
-                        case "Selection":
-                            await AddSelectionContextAsync();
-                            break;
-                            
-                        case "WholeSolution":
-                            await AddWholeSolutionContextAsync();
-                            break;
-                            
-                        case "SearchFiles":
-                            ShowContextSearch("File");
-                            break;
-                            
-                        case "SearchClasses":
-                            ShowContextSearch("Class");
-                            break;
-                            
-                        case "SearchMethods":
-                            ShowContextSearch("Method");
-                            break;
-                    }
+                    PlacementTarget = button,
+                    Placement = System.Windows.Controls.Primitives.PlacementMode.Top,
+                    Style = menuStyle
                 };
 
-                // Show type selection dialog
-                var typeWindow = new System.Windows.Window
+                // Helper to create menu items with Segoe MDL2 icon
+                System.Windows.Controls.MenuItem MakeItem(string icon, string label, string detail, RoutedEventHandler handler)
                 {
-                    Content = typeDialog,
-                    Title = "Add Context",
-                    Width = 500,
-                    Height = 400,
-                    WindowStartupLocation = System.Windows.WindowStartupLocation.CenterOwner,
-                    Owner = System.Windows.Window.GetWindow(this),
-                    ResizeMode = System.Windows.ResizeMode.NoResize,
-                    Background = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Colors.Transparent),
-                    WindowStyle = System.Windows.WindowStyle.ToolWindow
-                };
-                
-                typeWindow.ShowDialog();
+                    var item = new System.Windows.Controls.MenuItem();
+                    item.Style = itemStyle;
+                    var sp = new StackPanel { Orientation = System.Windows.Controls.Orientation.Horizontal };
+                    sp.Children.Add(new TextBlock
+                    {
+                        Text = icon,
+                        FontFamily = new System.Windows.Media.FontFamily("Segoe MDL2 Assets"),
+                        FontSize = 12,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Margin = new Thickness(0, 0, 8, 0),
+                        Foreground = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.WindowTextKey)
+                    });
+                    sp.Children.Add(new TextBlock
+                    {
+                        Text = label,
+                        FontSize = 12,
+                        VerticalAlignment = VerticalAlignment.Center,
+                        Foreground = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.WindowTextKey)
+                    });
+                    if (!string.IsNullOrEmpty(detail))
+                    {
+                        sp.Children.Add(new TextBlock
+                        {
+                            Text = detail,
+                            FontSize = 10,
+                            Opacity = 0.6,
+                            Margin = new Thickness(8, 0, 0, 0),
+                            VerticalAlignment = VerticalAlignment.Center,
+                            Foreground = (System.Windows.Media.Brush)FindResource(Microsoft.VisualStudio.Shell.VsBrushes.WindowTextKey)
+                        });
+                    }
+                    item.Header = sp;
+                    item.Click += handler;
+                    return item;
+                }
+
+                // Quick actions
+                menu.Items.Add(MakeItem("\uE8E6", "Selection", "", async (s, a) => await AddSelectionContextAsync()));
+
+                // Active document with current file name
+                string activeDocName = "";
+                try
+                {
+                    var path = await _codeEditorService.GetActiveDocumentPathAsync();
+                    if (!string.IsNullOrEmpty(path))
+                        activeDocName = System.IO.Path.GetFileName(path);
+                }
+                catch { }
+                menu.Items.Add(MakeItem("\uE8A5", "Active document", activeDocName, async (s, a) => await AddActiveDocumentContextAsync()));
+
+                menu.Items.Add(MakeItem("\uE8F1", "Solution", "OllamaLocalHostIntergration", async (s, a) => await AddWholeSolutionContextAsync()));
+
+                var sep = new Separator();
+                sep.Style = separatorStyle;
+                menu.Items.Add(sep);
+
+                // Search actions
+                menu.Items.Add(MakeItem("\uE8A5", "Files", "", (s, a) => ShowContextSearch("File")));
+                menu.Items.Add(MakeItem("\uE8D3", "Classes", "", (s, a) => ShowContextSearch("Class")));
+                menu.Items.Add(MakeItem("\uE8E3", "Methods", "", (s, a) => ShowContextSearch("Method")));
+
+                menu.IsOpen = true;
             }
             catch (Exception ex)
             {
-                txtStatusBar.Text = $"Error opening context dialog: {ex.Message}";
+                txtStatusBar.Text = $"Error opening context menu: {ex.Message}";
             }
         }
 

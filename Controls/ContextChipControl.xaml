@@ -15,9 +15,9 @@
             Background="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarMenuBackgroundGradientKey}}"
             BorderBrush="{DynamicResource {x:Static vsshell:VsBrushes.CommandBarBorderKey}}"
             BorderThickness="1"
-            CornerRadius="12"
-            Padding="10,5,6,5"
-            Margin="0,0,6,6">
+            CornerRadius="4"
+            Padding="8,4,6,4"
+            Margin="0,0,4,4">
         <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto"/>
@@ -33,7 +33,7 @@
                        FontSize="11"
                        Margin="0,0,6,0"
                        VerticalAlignment="Center"
-                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.AccentMediumKey}}"/>
+                       Foreground="{DynamicResource {x:Static vsshell:VsBrushes.ToolWindowTextKey}}"/>
             
             <!-- Type Label -->
             <TextBlock Grid.Column="1"
