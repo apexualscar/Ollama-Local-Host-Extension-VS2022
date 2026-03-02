@@ -501,15 +501,36 @@
                                  CaretBrush="{DynamicResource {x:Static vsshell:VsBrushes.WindowTextKey}}"
                                  TextChanged="TxtUserInput_TextChanged"/>
                         
-                        <!-- Send Button -->
-                        <Button Grid.Row="1"
-                                Content="Send"
-                                Click="SendMessageClick"
-                                HorizontalAlignment="Right"
-                                Margin="8,0,8,8"
-                                Padding="20,6"
-                                ToolTip="Send message (Enter)"
-                                Style="{DynamicResource CopilotPrimaryButton}"/>
+                        <!-- Send / Stop Buttons -->
+                        <Grid Grid.Row="1">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="Auto"/>
+                            </Grid.ColumnDefinitions>
+                            
+                            <!-- Stop Button (shown during streaming) -->
+                            <Button Grid.Column="1"
+                                    x:Name="btnStop"
+                                    Content="&#x25A0; Stop"
+                                    Click="StopRequestClick"
+                                    HorizontalAlignment="Right"
+                                    Margin="8,0,8,8"
+                                    Padding="20,6"
+                                    Visibility="Collapsed"
+                                    ToolTip="Stop the current AI request (Esc)"
+                                    Style="{DynamicResource CopilotSecondaryButton}"/>
+                            
+                            <!-- Send Button -->
+                            <Button Grid.Column="1"
+                                    x:Name="btnSend"
+                                    Content="Send"
+                                    Click="SendMessageClick"
+                                    HorizontalAlignment="Right"
+                                    Margin="8,0,8,8"
+                                    Padding="20,6"
+                                    ToolTip="Send message (Enter)"
+                                    Style="{DynamicResource CopilotPrimaryButton}"/>
+                        </Grid>
                     </Grid>
                 </Border>
             </Grid>

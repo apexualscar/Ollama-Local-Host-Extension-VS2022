@@ -1,6 +1,7 @@
 using System;
 using System.Net.Http;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -208,31 +209,31 @@ namespace OllamaLocalHostIntergration.Services
         /// <summary>
         /// Streaming variant of ExplainCodeAsync — sends tokens as they arrive
         /// </summary>
-        public async Task<string> ExplainCodeStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        public async Task<string> ExplainCodeStreamingAsync(string code, Action<string> onTokenReceived, string language = "", CancellationToken cancellationToken = default)
         {
             string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
             string prompt = $"Please explain the following code{languageInfo}:\n\n```\n{code}\n```";
-            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived, cancellationToken: cancellationToken);
         }
 
         /// <summary>
         /// Streaming variant of SuggestRefactoringAsync
         /// </summary>
-        public async Task<string> SuggestRefactoringStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        public async Task<string> SuggestRefactoringStreamingAsync(string code, Action<string> onTokenReceived, string language = "", CancellationToken cancellationToken = default)
         {
             string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
             string prompt = $"Please suggest refactoring improvements for the following code{languageInfo}:\n\n```\n{code}\n```\n\nProvide specific improvements with explanations.";
-            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived, cancellationToken: cancellationToken);
         }
 
         /// <summary>
         /// Streaming variant of FindCodeIssuesAsync
         /// </summary>
-        public async Task<string> FindCodeIssuesStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        public async Task<string> FindCodeIssuesStreamingAsync(string code, Action<string> onTokenReceived, string language = "", CancellationToken cancellationToken = default)
         {
             string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
             string prompt = $"Please analyze the following code{languageInfo} and identify any potential issues, bugs, or improvements:\n\n```\n{code}\n```";
-            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived, cancellationToken: cancellationToken);
         }
 
         /// <summary>
@@ -296,7 +297,8 @@ Provide the complete modified code in a code block. Explain the changes you made
             string userMessage, 
             Action<string> onTokenReceived,
             string systemPrompt = null, 
-            string context = "")
+            string context = "",
+            CancellationToken cancellationToken = default)
         {
             try
             {
@@ -331,7 +333,7 @@ Provide the complete modified code in a code block. Explain the changes you made
                     Content = content
                 };
 
-                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead);
+                var response = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
                 response.EnsureSuccessStatusCode();
 
                 var fullResponse = new StringBuilder();
@@ -342,6 +344,9 @@ Provide the complete modified code in a code block. Explain the changes you made
                     string line;
                     while ((line = await reader.ReadLineAsync()) != null)
                     {
+                        // Check for cancellation between tokens
+                        cancellationToken.ThrowIfCancellationRequested();
+
                         if (string.IsNullOrWhiteSpace(line))
                             continue;
 
@@ -378,6 +383,10 @@ Provide the complete modified code in a code block. Explain the changes you made
                 _conversationHistory.Add(new OllamaChatMessage { role = "assistant", content = assistantMessage });
 
                 return assistantMessage;
+            }
+            catch (OperationCanceledException)
+            {
+                throw; // Re-throw so callers can handle cancellation
             }
             catch (Exception ex)
             {

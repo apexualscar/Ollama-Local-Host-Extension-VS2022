@@ -6,6 +6,7 @@ using System.Windows.Media.Animation; // Phase 6.1+: For Storyboard animation
 using OllamaLocalHostIntergration.Services;
 using OllamaLocalHostIntergration.Models;
 using System.Threading.Tasks;
+using System.Threading;
 using EnvDTE;
 using System.Collections.Generic;
 using System.Linq;
@@ -37,6 +38,7 @@ namespace OllamaLocalHostIntergration
         private string _currentCodeContext = string.Empty;
         private List<string> _availableModels = new List<string>();
         private bool _isInitializing = true;
+        private CancellationTokenSource _currentRequestCts;
 
         public MyToolWindowControl()
         {
@@ -252,15 +254,49 @@ namespace OllamaLocalHostIntergration
             await SendUserMessage();
         }
 
+        /// <summary>
+        /// Cancels the current streaming AI request
+        /// </summary>
+        private void StopRequestClick(object sender, RoutedEventArgs e)
+        {
+            CancelCurrentRequest();
+        }
+
+        /// <summary>
+        /// Cancels the current request and resets UI state
+        /// </summary>
+        private void CancelCurrentRequest()
+        {
+            _currentRequestCts?.Cancel();
+        }
+
+        /// <summary>
+        /// Shows the Stop button and hides the Send button (during streaming)
+        /// </summary>
+        private void ShowStopButton(bool show)
+        {
+            if (btnStop != null && btnSend != null)
+            {
+                btnStop.Visibility = show ? Visibility.Visible : Visibility.Collapsed;
+                btnSend.Visibility = show ? Visibility.Collapsed : Visibility.Visible;
+            }
+        }
+
         private async void TxtUserInputKeyDown(object sender, KeyEventArgs e)
         {
             // Phase 5.5.4: Standard chat behavior
             // ENTER = Send message
             // SHIFT+ENTER = New line (default TextBox behavior)
+            // ESC = Stop current request
             if (e.Key == Key.Enter && !Keyboard.Modifiers.HasFlag(ModifierKeys.Shift))
             {
                 e.Handled = true;
                 await SendUserMessage();
+            }
+            else if (e.Key == Key.Escape)
+            {
+                e.Handled = true;
+                CancelCurrentRequest();
             }
             // If SHIFT+ENTER, let default behavior add new line (do nothing)
         }
@@ -286,6 +322,14 @@ namespace OllamaLocalHostIntergration
             
             if (string.IsNullOrWhiteSpace(userMessage))
                 return;
+
+            // Cancel any existing request and create new CTS
+            _currentRequestCts?.Cancel();
+            _currentRequestCts = new CancellationTokenSource();
+            var cancellationToken = _currentRequestCts.Token;
+
+            // Show stop button, hide send button
+            ShowStopButton(true);
 
             // Update server address if changed
             _ollamaService.UpdateServerAddress(serverAddress);
@@ -414,7 +458,8 @@ namespace OllamaLocalHostIntergration
                         });
                     },
                     systemPrompt, 
-                    codeContext
+                    codeContext,
+                    cancellationToken
                 );
                 
                 // Phase 6.1+: Hide spinning loader (in case no tokens received)
@@ -486,6 +531,30 @@ namespace OllamaLocalHostIntergration
                 // Update token count
                 UpdateTokenCount();
             }
+            catch (OperationCanceledException)
+            {
+                // Request was cancelled by user via Stop button
+                ShowLoadingSpinner(false);
+                
+                // Keep any partial streaming content that was already displayed
+                // Remove only empty streaming messages
+                for (int i = _chatMessages.Count - 1; i >= 0; i--)
+                {
+                    if (string.IsNullOrEmpty(_chatMessages[i].Content))
+                    {
+                        _chatMessages.RemoveAt(i);
+                    }
+                }
+                
+                // If there's partial content in the last AI message, mark it as stopped
+                if (_chatMessages.Count > 0 && !_chatMessages[_chatMessages.Count - 1].IsUser 
+                    && !string.IsNullOrEmpty(_chatMessages[_chatMessages.Count - 1].Content))
+                {
+                    _chatMessages[_chatMessages.Count - 1].Content += "\n\n*[Response stopped by user]*";
+                }
+                
+                txtStatusBar.Text = "Request cancelled";
+            }
             catch (Exception ex)
             {
                 // Phase 6.1+: Hide spinner on error
@@ -504,6 +573,11 @@ namespace OllamaLocalHostIntergration
                 _chatMessages.Add(errorMessage);
                 _currentConversation.Messages.Add(errorMessage);
                 txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                // Always reset the stop/send button state
+                ShowStopButton(false);
             }
 
             // Scroll to bottom
@@ -549,9 +623,20 @@ namespace OllamaLocalHostIntergration
             // Clear chat UI
             _chatMessages.Clear();
             _ollamaService.ClearConversationHistory();
+            _contextReferences.Clear();
+            _currentCodeContext = string.Empty;
             
-            // Reload conversations dropdown
-            await LoadSavedConversationsAsync();
+            // Reload conversations dropdown (suppress SelectionChanged while updating)
+            _isInitializing = true;
+            try
+            {
+                await LoadSavedConversationsAsync();
+                comboConversations.SelectedItem = null;
+            }
+            finally
+            {
+                _isInitializing = false;
+            }
             
             txtStatusBar.Text = "New conversation started";
         }
@@ -774,6 +859,12 @@ namespace OllamaLocalHostIntergration
         /// </summary>
         public async Task ExplainCodeAsync(string code, string language)
         {
+            // Cancel any existing request and create new CTS
+            _currentRequestCts?.Cancel();
+            _currentRequestCts = new CancellationTokenSource();
+            var cancellationToken = _currentRequestCts.Token;
+            ShowStopButton(true);
+
             try
             {
                 // Switch to Ask mode
@@ -817,7 +908,8 @@ namespace OllamaLocalHostIntergration
                             chatMessagesScroll?.ScrollToBottom();
                         });
                     },
-                    language
+                    language,
+                    cancellationToken
                 );
 
                 // Hide spinner (safety)
@@ -837,10 +929,19 @@ namespace OllamaLocalHostIntergration
                 txtStatusBar.Text = "Explanation complete";
                 chatMessagesScroll?.ScrollToBottom();
             }
+            catch (OperationCanceledException)
+            {
+                ShowLoadingSpinner(false);
+                txtStatusBar.Text = "Request cancelled";
+            }
             catch (Exception ex)
             {
                 ShowLoadingSpinner(false);
                 txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                ShowStopButton(false);
             }
         }
 
@@ -849,6 +950,12 @@ namespace OllamaLocalHostIntergration
         /// </summary>
         public async Task RefactorCodeAsync(string code, string language)
         {
+            // Cancel any existing request and create new CTS
+            _currentRequestCts?.Cancel();
+            _currentRequestCts = new CancellationTokenSource();
+            var cancellationToken = _currentRequestCts.Token;
+            ShowStopButton(true);
+
             try
             {
                 // Switch to Agent mode
@@ -892,7 +999,8 @@ namespace OllamaLocalHostIntergration
                             chatMessagesScroll?.ScrollToBottom();
                         });
                     },
-                    language
+                    language,
+                    cancellationToken
                 );
 
                 // Hide spinner (safety)
@@ -934,10 +1042,19 @@ namespace OllamaLocalHostIntergration
                 }
                 chatMessagesScroll?.ScrollToBottom();
             }
+            catch (OperationCanceledException)
+            {
+                ShowLoadingSpinner(false);
+                txtStatusBar.Text = "Request cancelled";
+            }
             catch (Exception ex)
             {
                 ShowLoadingSpinner(false);
                 txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                ShowStopButton(false);
             }
         }
 
@@ -946,6 +1063,12 @@ namespace OllamaLocalHostIntergration
         /// </summary>
         public async Task FindIssuesAsync(string code, string language)
         {
+            // Cancel any existing request and create new CTS
+            _currentRequestCts?.Cancel();
+            _currentRequestCts = new CancellationTokenSource();
+            var cancellationToken = _currentRequestCts.Token;
+            ShowStopButton(true);
+
             try
             {
                 // Switch to Ask mode
@@ -989,7 +1112,8 @@ namespace OllamaLocalHostIntergration
                             chatMessagesScroll?.ScrollToBottom();
                         });
                     },
-                    language
+                    language,
+                    cancellationToken
                 );
 
                 // Hide spinner (safety)
@@ -1009,10 +1133,19 @@ namespace OllamaLocalHostIntergration
                 txtStatusBar.Text = "Analysis complete";
                 chatMessagesScroll?.ScrollToBottom();
             }
+            catch (OperationCanceledException)
+            {
+                ShowLoadingSpinner(false);
+                txtStatusBar.Text = "Request cancelled";
+            }
             catch (Exception ex)
             {
                 ShowLoadingSpinner(false);
                 txtStatusBar.Text = $"Error: {ex.Message}";
+            }
+            finally
+            {
+                ShowStopButton(false);
             }
         }
         /// <summary>
