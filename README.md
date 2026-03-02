@@ -6,7 +6,8 @@
 [![.NET Framework 4.8](https://img.shields.io/badge/.NET%20Framework-4.8-blue.svg)](https://dotnet.microsoft.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
-<!-- HERO SCREENSHOT — replace this comment with: ![Hero overview](screenshots/hero-overview.png) -->
+
+![Hero overview](screenshots/hero-overview.png)
 
 ---
 
@@ -108,20 +109,17 @@ Ollama Copilot auto-detects every model installed on your Ollama server. Switch 
 
 ---
 
+
 ## Screenshots & Media
 
-Place media files in a `screenshots/` folder at the repo root.
+**Hero overview:**
+![Hero overview](screenshots/hero-overview.png)
 
-| # | File Name | Type | Description |
-|---|---|---|---|
-| 1 | `screenshots/hero-overview.png` | Screenshot | **Hero shot.** The full Ollama Copilot tool window docked in VS 2022, showing a multi-turn conversation with a code block response. The model selector, context chips, and input area should all be visible. |
-| 2 | `screenshots/right-click-menu.png` | Screenshot | **Editor context menu.** Code selected in the editor with the right-click menu open, showing the "Ollama Copilot" submenu with Explain Code, Find Issues, and Refactor with Ollama. |
-| 3 | `screenshots/gif-full-workflow.gif` | GIF (15–20 s) | **End-to-end workflow.** Open the tool window → attach Active Document as context → type a question → watch the streaming response arrive with a formatted code block → copy the code block. |
+**Editor context menu:**
+![Editor context menu](screenshots/right-click-menu.png)
 
-> **After capturing**, replace the `<!-- HERO SCREENSHOT -->` comment at the top of this README with:
-> ```md
-> ![Hero overview](screenshots/hero-overview.png)
-> ```
+**Full workflow GIF:**
+![Full workflow](screenshots/gif-full-workflow.gif)
 
 ---
 
