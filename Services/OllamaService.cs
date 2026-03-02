@@ -203,6 +203,38 @@ namespace OllamaLocalHostIntergration.Services
             return await GenerateChatResponseAsync(prompt);
         }
 
+        // ─── Streaming variants (token-by-token) ───
+
+        /// <summary>
+        /// Streaming variant of ExplainCodeAsync — sends tokens as they arrive
+        /// </summary>
+        public async Task<string> ExplainCodeStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        {
+            string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
+            string prompt = $"Please explain the following code{languageInfo}:\n\n```\n{code}\n```";
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+        }
+
+        /// <summary>
+        /// Streaming variant of SuggestRefactoringAsync
+        /// </summary>
+        public async Task<string> SuggestRefactoringStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        {
+            string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
+            string prompt = $"Please suggest refactoring improvements for the following code{languageInfo}:\n\n```\n{code}\n```\n\nProvide specific improvements with explanations.";
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+        }
+
+        /// <summary>
+        /// Streaming variant of FindCodeIssuesAsync
+        /// </summary>
+        public async Task<string> FindCodeIssuesStreamingAsync(string code, Action<string> onTokenReceived, string language = "")
+        {
+            string languageInfo = string.IsNullOrEmpty(language) ? "" : $" (Language: {language})";
+            string prompt = $"Please analyze the following code{languageInfo} and identify any potential issues, bugs, or improvements:\n\n```\n{code}\n```";
+            return await GenerateStreamingChatResponseAsync(prompt, onTokenReceived);
+        }
+
         /// <summary>
         /// Specialized method for Agent mode code editing
         /// Requests the AI to provide a complete modified version of code

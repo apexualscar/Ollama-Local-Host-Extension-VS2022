@@ -19,18 +19,53 @@ namespace OllamaLocalHostIntergration.Controls
         {
             InitializeComponent();
             DataContextChanged += OnDataContextChanged;
+            Unloaded += OnUnloaded;
         }
         
         public void SetCodeModificationService(CodeModificationService service)
         {
             _codeModService = service;
         }
-        
+
+        /// <summary>
+        /// Public method to update display text during streaming
+        /// </summary>
+        public void UpdateStreamingText(string text)
+        {
+            txtContent.Text = text;
+        }
+
         private void OnDataContextChanged(object sender, DependencyPropertyChangedEventArgs e)
+        {
+            // Unsubscribe from old message
+            if (e.OldValue is ChatMessage oldMessage)
+            {
+                oldMessage.ContentUpdated -= OnContentUpdated;
+            }
+
+            if (DataContext is ChatMessage message)
+            {
+                // Subscribe to live content updates (for streaming)
+                message.ContentUpdated += OnContentUpdated;
+                RenderMessage(message);
+            }
+        }
+
+        private void OnContentUpdated()
         {
             if (DataContext is ChatMessage message)
             {
-                RenderMessage(message);
+                // Update text directly for streaming (no code block parsing)
+                txtContent.Text = message.Content;
+            }
+        }
+
+        private void OnUnloaded(object sender, RoutedEventArgs e)
+        {
+            // Prevent memory leaks by unsubscribing
+            if (DataContext is ChatMessage message)
+            {
+                message.ContentUpdated -= OnContentUpdated;
             }
         }
         

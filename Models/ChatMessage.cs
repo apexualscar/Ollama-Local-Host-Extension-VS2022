@@ -5,7 +5,23 @@ namespace OllamaLocalHostIntergration.Models
 {
     public class ChatMessage
     {
-        public string Content { get; set; }
+        private string _content;
+
+        /// <summary>
+        /// Fires when Content is updated (used for live streaming display)
+        /// </summary>
+        public event Action ContentUpdated;
+
+        public string Content
+        {
+            get => _content;
+            set
+            {
+                _content = value;
+                ContentUpdated?.Invoke();
+            }
+        }
+
         public bool IsUser { get; set; }
         public DateTime Timestamp { get; set; }
         
@@ -36,7 +52,7 @@ namespace OllamaLocalHostIntergration.Models
 
         public ChatMessage(string content, bool isUser, string modelName = null)
         {
-            Content = content;
+            _content = content; // Use backing field to avoid firing event before subscribers attach
             IsUser = isUser;
             ModelName = modelName;
             Timestamp = DateTime.Now;
