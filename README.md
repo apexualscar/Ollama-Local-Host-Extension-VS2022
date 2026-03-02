@@ -7,7 +7,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE.txt)
 
 
-![Hero overview](screenshots/hero-overview.png)
+![Full workflow](screenshots/gif-full-workflow.gif)
 
 ---
 
